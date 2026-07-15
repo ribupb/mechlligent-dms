@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2 class="mb-4">
+
+        Workspace
+
+    </h2>
+
+    <div class="card p-4 shadow">
+
+        <h4>
+
+            Driving Theory Dataset
+
+        </h4>
+
+        <p>
+
+            German Driving Theory Validation & Malayalam Translation
+
+        </p>
+
+        <a
+        href="{{ url_for('dashboard.dashboard_page') }}"
+        class="btn btn-primary">
+
+        Open Project
+
+        </a>
+
+        <a
+        href="{{ url_for('project.create_project') }}"
+        class="btn btn-success">
+
+        Create New Project
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

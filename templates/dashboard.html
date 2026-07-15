@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% include "includes/navbar.html" %}
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-2 p-0">
+            {% include "includes/sidebar.html" %}
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10 p-4">
+
+            <!-- Project Title -->
+            <h2 class="fw-bold">
+                Driving Theory Dataset
+            </h2>
+
+            <p class="text-muted">
+                German Driving Theory Validation &
+                Malayalam Translation
+            </p>
+
+            <!-- Statistics Cards -->
+            <div class="row mt-4">
+
+                <div class="col-md-3 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6>Total Entries</h6>
+                            <h2>620</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6>English Validated</h6>
+                            <h2>412</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6>Malayalam Completed</h6>
+                            <h2>210</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6>Pending Corrections</h6>
+                            <h2>18</h2>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Overall Progress -->
+            <div class="mt-4">
+
+                <h5>Overall Progress</h5>
+
+                <div class="progress" style="height:25px;">
+
+                    <div
+                        class="progress-bar bg-success"
+                        role="progressbar"
+                        style="width:67%;">
+
+                        67%
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Search -->
+            <div class="mt-5">
+
+                <h5>Search</h5>
+
+                <input
+                    class="form-control"
+                    placeholder="Search by Entry ID, Topic, Subtopic...">
+
+            </div>
+
+            <!-- Continue Editing -->
+            <div class="card mt-4 shadow-sm">
+
+                <div class="card-body">
+
+                    <h5>Continue Editing</h5>
+
+                    <p class="mb-2">
+                        Last Edited Entry:
+                        <strong>#212</strong>
+                    </p>
+
+                    <button class="btn btn-primary">
+                        Continue
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- Topics -->
+            <div class="mt-5">
+
+                <h4>Topics</h4>
+
+                <div class="row mt-3">
+
+                    <div class="col-md-3 mb-3">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5>Traffic Rules</h5>
+                                <p>58 Entries</p>
+                                <button class="btn btn-outline-primary btn-sm">
+                                    Open
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5>Priority Rules</h5>
+                                <p>42 Entries</p>
+                                <button class="btn btn-outline-primary btn-sm">
+                                    Open
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5>Parking</h5>
+                                <p>35 Entries</p>
+                                <button class="btn btn-outline-primary btn-sm">
+                                    Open
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5>Road Signs</h5>
+                                <p>95 Entries</p>
+                                <button class="btn btn-outline-primary btn-sm">
+                                    Open
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Pending Corrections -->
+            <div class="card mt-5 shadow-sm">
+
+                <div class="card-body">
+
+                    <h5>Pending Corrections</h5>
+
+                    <p>
+                        18 Entries Require Review
+                    </p>
+
+                    <button class="btn btn-warning">
+                        View Corrections
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

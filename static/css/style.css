@@ -1,0 +1,16 @@
+body{
+    background:#f5f7fa;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+.card{
+    border:none;
+}
+
+.form-control{
+    border-radius:10px;
+}
+
+.btn{
+    border-radius:10px;
+}
