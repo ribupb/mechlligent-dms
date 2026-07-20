@@ -14,51 +14,33 @@
 
             <hr>
 
-            <form>
+            <form method="POST">
 
                 <div class="mb-3">
 
-                    <label class="form-label">
-
-                        Project Name
-
-                    </label>
+                    <label class="form-label">Project Name</label>
 
                     <input
                         type="text"
-                        class="form-control">
+                        class="form-control"
+                        name="project_name"
+                        required>
 
                 </div>
 
                 <div class="mb-3">
 
-                    <label class="form-label">
-
-                        Description
-
-                    </label>
+                    <label class="form-label">Description</label>
 
                     <textarea
                         class="form-control"
-                        rows="3"></textarea>
-
-                </div>
-
-                <div class="mb-3">
-
-                    <label class="form-label">
-
-                        Upload English Backbone
-
-                    </label>
-
-                    <input
-                        type="file"
-                        class="form-control">
+                        rows="3"
+                        name="description"></textarea>
 
                 </div>
 
                 <button
+                    type="submit"
                     class="btn btn-primary">
 
                     Create Project
