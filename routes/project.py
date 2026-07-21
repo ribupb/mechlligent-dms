@@ -453,6 +453,10 @@ def import_dataset(project_id):
             print(f"\nEXCEL ROW: {excel_row_number}")
             print(row_data)
             
+            # Skip completely empty rows
+            if row_data.get("Practice_question_id") is None:
+                continue
+                        
             
             # Remember latest values if they are not empty
 
