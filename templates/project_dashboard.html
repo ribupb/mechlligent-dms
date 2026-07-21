@@ -10,9 +10,11 @@
 
     <div class="mb-4">
 
-        <h2 class="fw-bold">{{ project.project_name }}</h2>
+        <h2 class="dashboard-title">
+            {{ project.project_name }}
+        </h2>
 
-        <p class="text-muted">
+        <p class="dashboard-description">
             {{ project.description }}
         </p>
 
@@ -24,14 +26,14 @@
 
         <div class="col-md-4">
 
-            <div class="card shadow-sm border-primary rounded-4">
+            <div class="card dashboard-stat-card">
 
-                <div class="card-body text-center py-3">
+                <div class="card-body dashboard-stat-body">
 
 
-                    <h3 class="fw-bold mb-1">{{ total_records }}</h3>
+                    <h3 class="dashboard-number">{{ total_records }}</h3>
 
-                    <small class="text-muted">
+                    <small class="dashboard-label">
                         Total Questions
                     </small>
 
@@ -45,12 +47,12 @@
 
             <div class="card shadow-sm border-info rounded-4">
 
-                <div class="card-body text-center py-3">
+                <div class="card-body dashboard-stat-body">
 
 
-                    <h3 class="fw-bold mb-1">{{ total_topics }}</h3>
+                    <h3 class="dashboard-number">{{ total_topics }}</h3>
 
-                    <small class="text-muted">
+                    <small class="dashboard-label">
                         Total Topics
                     </small>
 
@@ -64,12 +66,14 @@
 
             <div class="card shadow-sm border-success rounded-4">
 
-                <div class="card-body text-center py-3">
+                <div class="card-body dashboard-stat-body">
 
 
-                    <h3 class="fw-bold mb-1">{{ progress }}%</h3>
 
-                    <small class="text-muted">
+
+                    <h3 class="dashboard-number">{{ progress }}%</h3>
+
+                    <small class="dashboard-label">
                         Progress
                     </small>
 
@@ -87,12 +91,12 @@
 
             <div class="card shadow-sm border-success rounded-4">
 
-                <div class="card-body text-center py-3">
+                <div class="card-body dashboard-stat-body">
 
 
-                    <h3 class="fw-bold mb-1">{{ completed }}</h3>
+                    <h3 class="dashboard-number">{{ completed }}</h3>
 
-                    <small class="text-muted">
+                    <small class="dashboard-label">
                         Completed
                     </small>
 
@@ -106,12 +110,12 @@
 
             <div class="card shadow-sm border-warning rounded-4">
 
-                <div class="card-body text-center py-3">
+                <div class="card-body dashboard-stat-body">
 
 
-                    <h3 class="fw-bold mb-1">{{ english_only }}</h3>
+                    <h3 class="dashboard-number">{{ english_only }}</h3>
 
-                    <small class="text-muted">
+                    <small class="dashboard-label">
                         In Progress
                     </small>
 
@@ -125,12 +129,12 @@
 
             <div class="card shadow-sm border-danger rounded-4">
 
-                <div class="card-body text-center py-3">
+                <div class="card-body dashboard-stat-body">
 
 
-                    <h3 class="fw-bold mb-1">{{ corrections }}</h3>
+                    <h3 class="dashboard-number">{{ corrections }}</h3>
 
-                    <small class="text-muted">
+                    <small class="dashboard-label">
                         Corrections
                     </small>
 
@@ -144,17 +148,17 @@
 
     <!-- ================= Progress ================= -->
 
-    <div class="card shadow-sm rounded-4 mt-4 mb-4">
+    <div class="card dashboard-progress-card mt-4 mb-4">
 
         <div class="card-body">
 
-            <h5 class="fw-bold mb-3">
+            <h5 class="progress-title">
 
                 Translation Progress
 
             </h5>
 
-            <div class="progress" style="height:28px;">
+            <div class="progress" style="height:12px;">
 
                 <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
 
@@ -168,11 +172,13 @@
 
             </div>
 
-            <div class="d-flex justify-content-between mt-3">
+            <div class="d-flex justify-content-between mt-3 progress-footer">
 
                 <span>
 
-                    <strong>{{ completed }}</strong>
+                    <strong class="progress-count">
+                        {{ completed }}
+                    </strong>
 
                     Completed
 
@@ -180,7 +186,9 @@
 
                 <span>
 
-                    <strong>{{ total_records-completed }}</strong>
+                    <strong class="progress-count">
+                        {{ total_records-completed }}
+                    </strong>
 
                     Remaining
 

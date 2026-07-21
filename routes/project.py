@@ -92,6 +92,11 @@ def view_dataset(project_id):
 
     query = DatasetEntry.query.filter_by(project_id=project.id)
     
+    query = query.order_by(
+        DatasetEntry.topic_id.asc(),
+        DatasetEntry.practice_question_id.asc()
+    )
+    
     if topic:
         query = query.filter(
             DatasetEntry.topic_id == topic
