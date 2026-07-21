@@ -790,20 +790,23 @@ def export_dataset(project_id, language):
 
         ])
 
-    export_path = os.path.join(
-        "uploads",
-        f"project_{project.id}",
-        "exported_dataset.xlsx"
-    )
+    import os
 
-    workbook.save(export_path)
+    from io import BytesIO
+
+    output = BytesIO()
+
+    workbook.save(output)
+
+    output.seek(0)
 
     return send_file(
-        export_path,
+        output,
         as_attachment=True,
-        download_name=f"{project.project_name}_{language}.xlsx"
+        download_name=f"{project.project_name}_{language}.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    
+        
     
     
 @project.route("/project/<int:project_id>/corrections")
