@@ -534,10 +534,15 @@ def import_dataset(project_id):
                 has_correction=False
             )
             
-            db.session.add(entry)
-            print(f"Added: {entry.practice_question_id}")
-        
-        db.session.commit()
+            try:
+                db.session.add(entry)
+                db.session.commit()
+                print(f"Imported: {entry.practice_question_id}")
+            except Exception as e:
+                db.session.rollback()
+                print(f"FAILED: {entry.practice_question_id}")
+                print(e)
+                raise
 
         print("All rows imported successfully!")
 
