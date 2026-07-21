@@ -1,16 +1,41 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+<nav class="navbar custom-navbar">
 
-    <div class="container-fluid">
+    <div class="container-fluid px-4">
 
-        <a class="navbar-brand fw-bold" href="#">
+        <a class="navbar-brand" href="{{ url_for('workspace.workspace_page') }}">
 
-            MECHLLIGENT DMS
+            <span class="brand-title">
+                MECHLLIGENT
+            </span>
+
+            <span class="brand-subtitle">
+                Dataset Management System
+            </span>
 
         </a>
 
-        <div class="ms-auto text-white">
+        <div class="user-chip">
 
-            👤 Admin
+            <div class="user-avatar">
+                {{ session["full_name"][0] }}
+            </div>
+
+            <div class="user-info">
+
+                <span class="user-name">
+                    {{ session["username"] }}
+                </span>
+
+                <small>Logged In</small>
+
+            </div>
+
+            <a href="{{ url_for('auth.logout') }}"
+               class="logout-btn">
+
+                Logout
+
+            </a>
 
         </div>
 

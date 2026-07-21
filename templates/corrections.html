@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Corrections</title>
+
+</head>
+
+<body>
+
+<h2>Corrections</h2>
+
+<table border="1">
+
+<tr>
+
+<th>Question ID</th>
+
+<th>Correction</th>
+
+<th>Action</th>
+
+</tr>
+
+{% for row in entries %}
+
+<tr>
+
+<td>{{ row.practice_question_id }}</td>
+
+<td>{{ row.correction_note }}</td>
+
+<td>
+
+<a href="{{ url_for('project.edit_question',
+                    entry_id=row.id) }}">
+
+Edit
+
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+
+</html>

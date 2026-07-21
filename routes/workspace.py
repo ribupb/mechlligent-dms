@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template
 
 from models.project import Project
-
+from utils.auth import login_required
 workspace = Blueprint("workspace", __name__)
 
-
 @workspace.route("/workspace")
+@login_required
 def workspace_page():
 
     projects = Project.query.order_by(Project.created_at.desc()).all()

@@ -28,14 +28,11 @@ class DatasetEntry(db.Model):
         nullable=False
     )
     
-    topic = db.Column(
-    db.String(200)
-    )
+    topic_en = db.Column(db.String(200))
+    topic_ml = db.Column(db.String(200))
 
-    sub_topic = db.Column(
-        db.String(200)
-    )
-
+    sub_topic_en = db.Column(db.String(200))
+    sub_topic_ml = db.Column(db.String(200))
     scenario_en = db.Column(
         db.Text
     )
@@ -161,3 +158,5 @@ class DatasetEntry(db.Model):
     correction_note = db.Column(
         db.Text
     )
+    
+    attempted = db.Column(db.Boolean, default=False)

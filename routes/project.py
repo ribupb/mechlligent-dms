@@ -1,13 +1,17 @@
 import os
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 from flask import (
     Blueprint,
     render_template,
     request,
     redirect,
     url_for,
-    flash
+    flash,
+    send_file
 )
+from utils.auth import login_required
+
+from sqlalchemy import or_
 
 from models.dataset_entry import DatasetEntry
 from models import db
@@ -16,14 +20,322 @@ from models.project import Project
 project = Blueprint("project", __name__)
 
 @project.route("/project/<int:project_id>/dashboard")
+@login_required
+
+
 def project_dashboard(project_id):
 
     project = Project.query.get_or_404(project_id)
 
+    total_records = DatasetEntry.query.filter_by(
+        project_id=project.id
+    ).count()
+
+    total_topics = db.session.query(
+        DatasetEntry.topic_id
+    ).filter_by(
+        project_id=project.id
+    ).distinct().count()
+    
+    not_started = DatasetEntry.query.filter_by(
+    project_id=project.id,
+    attempted=False
+    ).count()
+
+    english_only = DatasetEntry.query.filter(
+    DatasetEntry.project_id == project.id,
+    DatasetEntry.attempted == True,
+    or_(
+        DatasetEntry.question_ml.is_(None),
+        DatasetEntry.question_ml == ""
+    )
+    ).count()
+
+    completed = DatasetEntry.query.filter(
+        DatasetEntry.project_id == project.id,
+        DatasetEntry.question_ml.isnot(None),
+        DatasetEntry.question_ml != ""
+    ).count()
+
+    corrections = DatasetEntry.query.filter(
+        DatasetEntry.project_id == project.id,
+        DatasetEntry.correction_note.isnot(None),
+        DatasetEntry.correction_note != ""
+    ).count()
+    progress = 0
+
+    if total_records > 0:
+        progress = round((completed / total_records) * 100)
+
     return render_template(
         "project_dashboard.html",
-        project=project
+        project=project,
+        total_records=total_records,
+        total_topics=total_topics,
+
+        not_started=not_started,
+        english_only=english_only,
+        completed=completed,
+        corrections=corrections,
+
+        progress=progress
     )
+    
+@project.route("/project/<int:project_id>/dataset")
+def view_dataset(project_id):
+
+    project = Project.query.get_or_404(project_id)
+
+    search = request.args.get("search", "").strip()
+    
+    topic = request.args.get("topic", "")
+
+    query = DatasetEntry.query.filter_by(project_id=project.id)
+    
+    if topic:
+        query = query.filter(
+            DatasetEntry.topic_id == topic
+        )
+
+    if search:
+
+        query = query.filter(
+
+            or_(
+
+                DatasetEntry.topic_en.ilike(f"%{search}%"),
+                DatasetEntry.topic_ml.ilike(f"%{search}%"),
+
+                DatasetEntry.sub_topic_en.ilike(f"%{search}%"),
+                DatasetEntry.sub_topic_ml.ilike(f"%{search}%"),
+
+                DatasetEntry.practice_question_id.ilike(f"%{search}%"),
+
+                DatasetEntry.question_en.ilike(f"%{search}%")
+
+            )
+
+        )
+        
+    topics = (
+        db.session.query(DatasetEntry.topic_id)
+        .filter_by(project_id=project.id)
+        .distinct()
+        .order_by(DatasetEntry.topic_id)
+        .all()
+    )
+        
+
+    page = request.args.get("page", 1, type=int)
+
+    dataset = query.paginate(
+        page=page,
+        per_page=20,
+        error_out=False
+    )
+    
+    total_records = DatasetEntry.query.filter_by(
+        project_id=project.id
+    ).count()
+
+    return render_template(
+        "view_dataset.html",
+        project=project,
+        dataset=dataset,
+        search=search,
+        topic=topic,
+        topics=topics,
+        total_records=total_records
+    )
+    
+    
+@project.route("/question/<int:entry_id>")
+def view_question(entry_id):
+
+    entry = DatasetEntry.query.get_or_404(entry_id)
+
+    return render_template(
+        "view_question.html",
+        entry=entry
+    )
+
+
+@project.route("/question/<int:entry_id>/edit", methods=["GET", "POST"])
+def edit_question(entry_id):
+
+    entry = DatasetEntry.query.get_or_404(entry_id)
+
+    if request.method == "POST":
+
+    # -------------------------------
+    # Topic
+    # -------------------------------
+        entry.topic_en = request.form.get("topic_en")
+        entry.topic_ml = request.form.get("topic_ml")
+
+        selected_subtopic = request.form.get("sub_topic_en")
+
+        if selected_subtopic == "__NEW__":
+            entry.sub_topic_en = request.form.get("new_sub_topic")
+        else:
+            entry.sub_topic_en = selected_subtopic
+        entry.sub_topic_ml = request.form.get("sub_topic_ml")
+
+        # -------------------------------
+        # Scenario
+        # -------------------------------
+        entry.scenario_en = request.form.get("scenario_en")
+        entry.scenario_ml = request.form.get("scenario_ml")
+
+        entry.scenario_explanation_en = request.form.get("scenario_explanation_en")
+        entry.scenario_explanation_ml = request.form.get("scenario_explanation_ml")
+
+        entry.memory_shortcut_en = request.form.get("memory_shortcut_en")
+        entry.memory_shortcut_ml = request.form.get("memory_shortcut_ml")
+
+        entry.applies_when_en = request.form.get("applies_when_en")
+        entry.applies_when_ml = request.form.get("applies_when_ml")
+
+        entry.not_applies_when_en = request.form.get("not_applies_when_en")
+        entry.not_applies_when_ml = request.form.get("not_applies_when_ml")
+
+        # -------------------------------
+        # Question
+        # -------------------------------
+        entry.question_en = request.form.get("question_en")
+        entry.question_ml = request.form.get("question_ml")
+
+        entry.option_a_en = request.form.get("option_a_en")
+        entry.option_a_ml = request.form.get("option_a_ml")
+
+        entry.option_b_en = request.form.get("option_b_en")
+        entry.option_b_ml = request.form.get("option_b_ml")
+
+        entry.option_c_en = request.form.get("option_c_en")
+        entry.option_c_ml = request.form.get("option_c_ml")
+
+        entry.correct_answer_letter = request.form.get("correct_answer_letter")
+
+        entry.correct_answer_en = request.form.get("correct_answer_en")
+        entry.correct_answer_ml = request.form.get("correct_answer_ml")
+
+        entry.explanation_en = request.form.get("explanation_en")
+        entry.explanation_ml = request.form.get("explanation_ml")
+
+        entry.wrong_answer_tip_en = request.form.get("wrong_answer_tip_en")
+        entry.wrong_answer_tip_ml = request.form.get("wrong_answer_tip_ml")
+
+    # -------------------------------
+    # Other Fields
+    # -------------------------------
+        entry.question_image_ref = request.form.get("question_image_ref")
+
+        entry.correction_note = request.form.get("correction_note")
+
+        entry.english_completed = "english_completed" in request.form
+        entry.malayalam_completed = "malayalam_completed" in request.form
+
+        entry.attempted = True
+        db.session.commit()
+
+        flash("Question updated successfully!", "success")
+
+        return redirect(
+            url_for(
+                "project.edit_question",
+                entry_id=entry.id
+            )
+        )
+    project = Project.query.get(entry.project_id)        
+        
+    previous_entry = DatasetEntry.query.filter(
+        DatasetEntry.project_id == entry.project_id,
+        DatasetEntry.id < entry.id
+    ).order_by(DatasetEntry.id.desc()).first()
+
+    next_entry = DatasetEntry.query.filter(
+        DatasetEntry.project_id == entry.project_id,
+        DatasetEntry.attempted == False,
+        DatasetEntry.id > entry.id
+    ).order_by(DatasetEntry.id.asc()).first()
+
+    topics = (
+    db.session.query(DatasetEntry.topic_en)
+    .distinct()
+    .order_by(DatasetEntry.topic_en)
+    .all()
+    )
+
+    topics = [t[0] for t in topics if t[0]]
+    
+
+    subtopics = (
+        db.session.query(
+            DatasetEntry.topic_en,
+            DatasetEntry.sub_topic_en
+        )
+        .distinct()
+        .order_by(
+            DatasetEntry.topic_en,
+            DatasetEntry.sub_topic_en
+        )
+        .all()
+    )
+    
+    
+    topic_translations = (
+        db.session.query(
+            DatasetEntry.topic_en,
+            DatasetEntry.topic_ml
+        )
+        .distinct()
+        .all()
+    )
+
+    subtopic_translations = (
+        db.session.query(
+            DatasetEntry.sub_topic_en,
+            DatasetEntry.sub_topic_ml
+        )
+        .distinct()
+        .all()
+    )
+
+    return render_template(
+        "edit_question.html",
+        project=project,
+        entry=entry,
+        previous_entry=previous_entry,
+        next_entry=next_entry,
+        topics=topics,
+        subtopics=subtopics,
+        topic_translations=topic_translations,
+        subtopic_translations=subtopic_translations
+    )
+        
+    
+
+@project.route("/question/<int:entry_id>/delete", methods=["POST"])
+def delete_question(entry_id):
+
+    entry = DatasetEntry.query.get_or_404(entry_id)
+
+    project_id = entry.project_id
+
+    db.session.delete(entry)
+    db.session.commit()
+
+    flash("Question deleted successfully!", "success")
+
+    return redirect(
+        url_for(
+            "project.view_dataset",
+            project_id=project_id
+        )
+    )
+    
+
+
 
 @project.route("/create-project", methods=["GET", "POST"])
 def create_project():
@@ -85,6 +397,12 @@ def import_dataset(project_id):
         workbook = load_workbook(file_path)
 
         sheet = workbook.active
+        
+        # Delete old dataset entries for this project
+        DatasetEntry.query.filter_by(project_id=project.id).delete()
+        db.session.commit()
+
+        print("Old dataset deleted successfully!")
         
         # Read column headers (Excel Row 1)
         headers = next(
@@ -174,8 +492,13 @@ def import_dataset(project_id):
 
                 topic_id=current_topic_id,
                 practice_question_id=row_data["Practice_question_id"],
-                topic=current_topic,
-                sub_topic=current_sub_topic,
+
+                topic_en=current_topic,
+                topic_ml=None,
+
+                sub_topic_en=current_sub_topic,
+                sub_topic_ml=None,
+
 
                 scenario_en=current_scenario,
                 scenario_explanation_en=current_scenario_explanation,
@@ -195,7 +518,11 @@ def import_dataset(project_id):
                 explanation_en=row_data["Explanation"],
                 wrong_answer_tip_en=row_data["Wrong_Answer_Tip"],
 
-                question_image_ref=row_data["Question_image_ref"]
+                question_image_ref=row_data["Question_image_ref"],
+                english_completed=False,
+                malayalam_completed=False,
+                attempted=False,
+                has_correction=False
             )
             
             db.session.add(entry)
@@ -218,12 +545,7 @@ def import_dataset(project_id):
         print("Columns:", total_columns)
         print("=" * 50)
 
-        project.template_excel_path = os.path.join(
-            "project_files",
-            "uploads",
-            f"project_{project.id}",
-            filename
-        )
+        project.template_excel_path = file_path
         project.status = "Dataset Imported"
 
         db.session.commit()
@@ -243,4 +565,484 @@ def import_dataset(project_id):
     return render_template(
         "import_dataset.html",
         project=project
+    )
+    
+    
+    
+@project.route("/project/<int:project_id>/export/<language>")
+def export_dataset(project_id, language):
+
+    project = Project.query.get_or_404(project_id)
+
+    entries = DatasetEntry.query.filter_by(
+        project_id=project.id
+    ).order_by(
+        DatasetEntry.row_number
+    ).all()
+
+    if not entries:
+        flash("No dataset available.", "warning")
+        return redirect(
+            url_for(
+                "project.project_dashboard",
+                project_id=project.id
+            )
+        )
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Dataset"
+
+    headers = [
+
+    "Topic_id",
+
+    "Topic",
+
+    "Sub_topic",
+
+    "Scenario",
+
+    "Concept_image_ref",
+
+    "Scenario_explanation",
+
+    "Memory_shortcut",
+
+    "Applies_when",
+
+    "Not_applies_when",
+
+    "Practice_question_id",
+
+    "Questions",
+
+    "Option_A",
+
+    "Option_B",
+
+    "Option_C",
+
+    "Correct_answer_letter",
+
+    "Correct_answer",
+
+    "Explanation",
+
+    "Wrong_Answer_Tip",
+
+    "Question_image_ref"
+
+]
+
+    sheet.append(headers)
+    
+    
+    if language == "english":
+
+        topic = "topic_en"
+        sub_topic = "sub_topic_en"
+
+        scenario = "scenario_en"
+        scenario_explanation = "scenario_explanation_en"
+
+        memory_shortcut = "memory_shortcut_en"
+        applies_when = "applies_when_en"
+        not_applies_when = "not_applies_when_en"
+
+        question = "question_en"
+
+        option_a = "option_a_en"
+        option_b = "option_b_en"
+        option_c = "option_c_en"
+
+        correct_answer = "correct_answer_en"
+
+        explanation = "explanation_en"
+
+        wrong_answer_tip = "wrong_answer_tip_en"
+
+    elif language == "malayalam":
+
+        topic = "topic_ml"
+        sub_topic = "sub_topic_ml"
+
+        scenario = "scenario_ml"
+        scenario_explanation = "scenario_explanation_ml"
+
+        memory_shortcut = "memory_shortcut_ml"
+        applies_when = "applies_when_ml"
+        not_applies_when = "not_applies_when_ml"
+
+        question = "question_ml"
+
+        option_a = "option_a_ml"
+        option_b = "option_b_ml"
+        option_c = "option_c_ml"
+
+        correct_answer = "correct_answer_ml"
+
+        explanation = "explanation_ml"
+
+        wrong_answer_tip = "wrong_answer_tip_ml"
+
+    else:
+
+        flash("Invalid export type", "danger")
+
+        return redirect(
+            url_for(
+                "project.project_dashboard",
+                project_id=project.id
+            )
+        )
+    
+    
+    previous_topic = None
+
+    for entry in entries:
+        
+        
+        if entry.topic_id != previous_topic:
+
+            topic_id = entry.topic_id
+
+            topic_value = getattr(entry, topic)
+            sub_topic_value = getattr(entry, sub_topic)
+
+            scenario_value = getattr(entry, scenario)
+
+            concept_image_ref = entry.topic_id.lower()
+
+            scenario_explanation_value = getattr(entry, scenario_explanation)
+
+            memory_shortcut_value = getattr(entry, memory_shortcut)
+
+            applies_when_value = getattr(entry, applies_when)
+
+            not_applies_when_value = getattr(entry, not_applies_when)
+
+            previous_topic = entry.topic_id
+
+        else:
+
+            topic_id = ""
+
+            topic_value = ""
+
+            sub_topic_value = ""
+
+            scenario_value = ""
+
+            concept_image_ref = ""
+
+            scenario_explanation_value = ""
+
+            memory_shortcut_value = ""
+
+            applies_when_value = ""
+
+            not_applies_when_value = ""
+        
+        
+        
+        
+
+        sheet.append([
+
+            topic_id,
+
+            topic_value,
+
+            sub_topic_value,
+
+            scenario_value,
+
+            concept_image_ref,
+
+            scenario_explanation_value,
+
+            memory_shortcut_value,
+
+            applies_when_value,
+
+            not_applies_when_value,
+
+            entry.practice_question_id,
+
+            getattr(entry, question),
+
+            getattr(entry, option_a),
+
+            getattr(entry, option_b),
+
+            getattr(entry, option_c),
+
+            entry.correct_answer_letter,
+
+            getattr(entry, correct_answer),
+
+            getattr(entry, explanation),
+
+            getattr(entry, wrong_answer_tip),
+
+            entry.question_image_ref
+
+        ])
+
+    export_path = os.path.join(
+        "uploads",
+        f"project_{project.id}",
+        "exported_dataset.xlsx"
+    )
+
+    workbook.save(export_path)
+
+    return send_file(
+        export_path,
+        as_attachment=True,
+        download_name=f"{project.project_name}_{language}.xlsx"
+    )
+    
+    
+    
+@project.route("/project/<int:project_id>/corrections")
+def corrections(project_id):
+
+    project = Project.query.get_or_404(project_id)
+
+    entries = DatasetEntry.query.filter(
+
+        DatasetEntry.project_id == project.id,
+
+        DatasetEntry.correction_note.isnot(None),
+
+        DatasetEntry.correction_note != ""
+
+    ).all()
+
+    return render_template(
+        "corrections.html",
+        project=project,
+        entries=entries
+    )
+    
+    
+    
+@project.route("/project/<int:project_id>/continue")
+def continue_editing(project_id):
+
+    project = Project.query.get_or_404(project_id)
+
+    entry = DatasetEntry.query.filter_by(
+        project_id=project.id,
+        attempted=False
+    ).order_by(DatasetEntry.row_number).first()
+
+    if not entry:
+
+        flash("🎉 All questions have been reviewed!", "success")
+
+        return redirect(
+            url_for(
+                "project.view_dataset",
+                project_id=project.id
+            )
+        )
+
+    return redirect(
+        url_for(
+            "project.edit_question",
+            entry_id=entry.id
+        )
+    )
+    
+    
+    
+@project.route("/project/<int:project_id>/new-entry", methods=["GET", "POST"])
+def new_entry(project_id):
+
+    project = Project.query.get_or_404(project_id)
+
+    if request.method == "POST":
+
+        entry = DatasetEntry()
+
+        entry.project_id = project.id
+        
+        selected_topic = request.form.get("topic_en")
+
+        if selected_topic == "__NEW__":
+            entry.topic_en = request.form.get("new_topic_name")
+        else:
+            entry.topic_en = selected_topic
+        entry.topic_ml = request.form.get("topic_ml")
+
+        selected_subtopic = request.form.get("sub_topic_en")
+
+        if selected_subtopic == "__NEW__":
+            entry.sub_topic_en = request.form.get("new_sub_topic")
+        else:
+            entry.sub_topic_en = selected_subtopic
+        entry.sub_topic_ml = request.form.get("sub_topic_ml")
+
+        # -------------------------------
+        # Scenario
+        # -------------------------------
+        entry.scenario_en = request.form.get("scenario_en")
+        entry.scenario_ml = request.form.get("scenario_ml")
+
+        entry.scenario_explanation_en = request.form.get("scenario_explanation_en")
+        entry.scenario_explanation_ml = request.form.get("scenario_explanation_ml")
+
+        entry.memory_shortcut_en = request.form.get("memory_shortcut_en")
+        entry.memory_shortcut_ml = request.form.get("memory_shortcut_ml")
+
+        entry.applies_when_en = request.form.get("applies_when_en")
+        entry.applies_when_ml = request.form.get("applies_when_ml")
+
+        entry.not_applies_when_en = request.form.get("not_applies_when_en")
+        entry.not_applies_when_ml = request.form.get("not_applies_when_ml")
+
+        # -------------------------------
+        # Question
+        # -------------------------------
+        entry.question_en = request.form.get("question_en")
+        entry.question_ml = request.form.get("question_ml")
+
+        entry.option_a_en = request.form.get("option_a_en")
+        entry.option_a_ml = request.form.get("option_a_ml")
+
+        entry.option_b_en = request.form.get("option_b_en")
+        entry.option_b_ml = request.form.get("option_b_ml")
+
+        entry.option_c_en = request.form.get("option_c_en")
+        entry.option_c_ml = request.form.get("option_c_ml")
+
+        entry.correct_answer_letter = request.form.get("correct_answer_letter")
+
+        entry.correct_answer_en = request.form.get("correct_answer_en")
+        entry.correct_answer_ml = request.form.get("correct_answer_ml")
+
+        entry.explanation_en = request.form.get("explanation_en")
+        entry.explanation_ml = request.form.get("explanation_ml")
+
+        entry.wrong_answer_tip_en = request.form.get("wrong_answer_tip_en")
+        entry.wrong_answer_tip_ml = request.form.get("wrong_answer_tip_ml")
+
+    # -------------------------------
+    # Other Fields
+    # -------------------------------
+        entry.question_image_ref = request.form.get("question_image_ref")
+
+        entry.correction_note = request.form.get("correction_note")
+
+        entry.english_completed = "english_completed" in request.form
+        entry.malayalam_completed = "malayalam_completed" in request.form
+
+        entry.attempted = True
+        
+        entry.english_completed = "english_completed" in request.form
+        entry.malayalam_completed = "malayalam_completed" in request.form
+
+        entry.attempted = True
+        
+        
+        last_entry = DatasetEntry.query.filter_by(project_id=project.id) \
+            .order_by(DatasetEntry.row_number.desc()) \
+            .first()
+
+        if last_entry:
+            entry.row_number = last_entry.row_number + 1
+        else:
+            entry.row_number = 1
+            
+            
+        selected_topic = entry.topic_en
+
+        topics = DatasetEntry.query.filter_by(
+            project_id=project.id,
+            topic_en=selected_topic
+        ).all()
+
+        if topics:
+
+            prefix = topics[0].topic_id.split("_")[0]
+
+            max_number = max(
+                int(t.topic_id.split("_")[1])
+                for t in topics
+            )
+
+            entry.topic_id = f"{prefix}_{max_number + 1}"
+
+        else:
+            topic_code = request.form.get("topic_code", "").upper()
+            entry.topic_id = f"{topic_code}_1"
+
+        entry.practice_question_id = f"{entry.topic_id}_Q1"
+
+        db.session.add(entry)
+        db.session.commit()
+
+        flash("New dataset entry created successfully!", "success")
+
+        return redirect(
+            url_for(
+                "project.edit_question",
+                entry_id=entry.id
+            )
+        )
+        
+    topics = (
+        db.session.query(DatasetEntry.topic_en)
+        .distinct()
+        .order_by(DatasetEntry.topic_en)
+        .all()
+    )
+
+    topics = [t[0] for t in topics if t[0]]
+    
+    
+    topic_translations = (
+        db.session.query(
+            DatasetEntry.topic_en,
+            DatasetEntry.topic_ml
+        )
+        .distinct()
+        .all()
+    )
+
+    subtopic_translations = (
+        db.session.query(
+            DatasetEntry.sub_topic_en,
+            DatasetEntry.sub_topic_ml
+        )
+        .distinct()
+        .all()
+    )
+    
+
+    subtopics = (
+        db.session.query(
+            DatasetEntry.topic_en,
+            DatasetEntry.sub_topic_en
+        )
+        .distinct()
+        .order_by(
+            DatasetEntry.topic_en,
+            DatasetEntry.sub_topic_en
+        )
+        .all()
+    )
+    return render_template(
+        "edit_question.html",
+        project=project,
+        entry=None,
+        previous_entry=None,
+        next_entry=None,
+        topics=topics,
+        subtopics=subtopics,
+        topic_translations=topic_translations,
+        subtopic_translations=subtopic_translations
     )

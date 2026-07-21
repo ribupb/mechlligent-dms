@@ -14,3 +14,404 @@ body{
 .btn{
     border-radius:10px;
 }
+
+.sticky-footer{
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+
+    background:white;
+
+    border-top:1px solid #ddd;
+
+    padding:15px 25px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    box-shadow:0 -3px 12px rgba(0,0,0,.08);
+
+    z-index:999;
+}
+
+
+
+
+/* =====================================================
+   Workspace
+===================================================== */
+
+body{
+    background:#f5f7fb;
+}
+
+/* =====================================================
+   Header
+===================================================== */
+
+.workspace-header{
+    margin-bottom:35px;
+}
+
+.welcome-text{
+    color:#0d6efd;
+    font-size:25px;
+    font-weight:600;
+    margin-bottom:6px;
+}
+
+.workspace-title{
+    font-size:34px;
+    font-weight:700;
+    color:#212529;
+    margin-bottom:6px;
+    line-height:1.2;
+}
+
+.workspace-subtitle{
+    color:#6c757d;
+    font-size:15px;
+    margin-bottom:0;
+}
+
+.workspace-header .btn{
+    padding:10px 22px;
+    border-radius:10px;
+    font-weight:600;
+}
+
+/* =====================================================
+   Statistics Cards
+===================================================== */
+
+.workspace-stat{
+    border:none;
+    border-radius:16px;
+    box-shadow:0 4px 15px rgba(0,0,0,.08);
+    transition:.25s ease;
+    background:#fff;
+}
+
+.workspace-stat:hover{
+    transform:translateY(-4px);
+    box-shadow:0 10px 25px rgba(0,0,0,.12);
+}
+
+.workspace-stat .card-body{
+    padding:20px 24px;
+}
+
+.workspace-stat small{
+    color:#6c757d;
+    font-weight:600;
+    font-size:14px;
+}
+
+.workspace-stat h3{
+    margin-top:8px;
+    margin-bottom:0;
+    font-size:32px;
+    font-weight:700;
+}
+
+/* =====================================================
+   Section Header
+===================================================== */
+
+.section-title{
+    font-size:26px;
+    font-weight:700;
+    margin-bottom:4px;
+}
+
+.section-subtitle{
+    color:#6c757d;
+    font-size:14px;
+}
+
+/* =====================================================
+   Project Cards
+===================================================== */
+
+.project-card{
+    border:none;
+    border-radius:16px;
+    box-shadow:0 5px 18px rgba(0,0,0,.08);
+    transition:.25s ease;
+    background:#fff;
+}
+
+.project-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 14px 30px rgba(0,0,0,.12);
+}
+
+.project-card .card-body{
+    padding:22px;
+}
+
+.project-card h5{
+    font-size:21px;
+    font-weight:700;
+}
+
+.project-card p{
+    color:#6c757d;
+    margin-top:12px;
+    margin-bottom:16px;
+}
+
+.project-card .badge{
+    font-size:12px;
+    font-weight:600;
+    padding:6px 10px;
+    border-radius:8px;
+}
+
+.project-card hr{
+    margin:18px 0;
+}
+
+.project-card .btn{
+    border-radius:10px;
+    font-weight:600;
+}
+
+/* =====================================================
+   Common Buttons
+===================================================== */
+
+.btn{
+    border-radius:10px;
+    transition:.25s;
+}
+
+.btn:hover{
+    transform:translateY(-1px);
+}
+
+/* =====================================================
+   Responsive
+===================================================== */
+
+@media (max-width:768px){
+
+    .workspace-header{
+        text-align:center;
+    }
+
+    .workspace-header .d-flex{
+        flex-direction:column;
+        gap:20px;
+    }
+
+    .workspace-title{
+        font-size:28px;
+    }
+
+    .workspace-header .btn{
+        width:100%;
+    }
+
+}
+
+
+
+
+/* ===============================
+   GOOGLE FONT
+================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+body{
+
+    font-family:'Poppins',sans-serif;
+
+    background:#f5f7fb;
+
+}
+
+
+
+
+/* ===============================
+   NAVBAR
+================================= */
+
+.custom-navbar{
+
+    background:linear-gradient(135deg,#0d6efd,#2563eb);
+
+    height:72px;
+
+    padding:0;
+
+    box-shadow:0 8px 25px rgba(13,110,253,.18);
+
+}
+
+.navbar-brand{
+
+    display:flex;
+
+    flex-direction:column;
+
+    text-decoration:none;
+
+}
+
+.brand-title{
+
+    color:#fff;
+
+    font-size:22px;
+
+    font-weight:700;
+
+    letter-spacing:2px;
+
+    text-transform:uppercase;
+
+    line-height:1;
+
+}
+
+.brand-subtitle{
+
+    color:rgba(255,255,255,.75);
+
+    font-size:11px;
+
+    margin-top:5px;
+
+    letter-spacing:.6px;
+
+}
+
+.user-chip{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    background:rgba(255,255,255,.14);
+
+    border:1px solid rgba(255,255,255,.2);
+
+    backdrop-filter:blur(12px);
+
+    padding:8px 10px 8px 8px;
+
+    border-radius:50px;
+
+}
+
+.user-avatar{
+
+    width:42px;
+
+    height:42px;
+
+    border-radius:50%;
+
+    background:white;
+
+    color:#0d6efd;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-weight:700;
+
+    font-size:18px;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+
+}
+
+.user-info{
+
+    display:flex;
+
+    flex-direction:column;
+
+    line-height:1.2;
+
+}
+
+.user-name{
+
+    color:white;
+
+    font-weight:600;
+
+    font-size:15px;
+
+}
+
+.user-info small{
+
+    color:rgba(255,255,255,.75);
+
+    font-size:11px;
+
+}
+
+.logout-btn{
+
+    background:white;
+
+    color:#0d6efd;
+
+    padding:8px 18px;
+
+    border-radius:30px;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+    transition:.25s;
+
+}
+
+.logout-btn:hover{
+
+    background:#f1f5ff;
+
+    color:#0d6efd;
+
+    transform:translateY(-1px);
+
+}
+
+
+
+/* ===============================
+   edit question
+================================= */
+
+
+
+
+#editor-content{
+    transition: all .18s ease;
+}
+
+.slide-next{
+    opacity:0;
+    transform:translateX(-30px);
+}
+
+.slide-prev{
+    opacity:0;
+    transform:translateX(30px);
+}

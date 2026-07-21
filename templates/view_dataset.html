@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<body class="bg-light">
+
+<div class="container-fluid py-4">
+
+    <!-- ================= HEADER ================= -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                {{ project.project_name }}
+            </h2>
+
+            <p class="text-muted mb-0">
+                Dataset Management System
+            </p>
+
+        </div>
+
+        <div>
+
+            <a href="{{ url_for('project.new_entry', project_id=project.id) }}"
+            class="btn btn-success">
+                + New Entry
+            </a>
+
+            <a href="{{ url_for('project.project_dashboard', project_id=project.id) }}"
+               class="btn btn-outline-secondary me-2">
+
+                Dashboard
+
+            </a>
+
+            <a href="{{ url_for('project.continue_editing', project_id=project.id) }}"
+               class="btn btn-success">
+
+                ▶ Continue Editing
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= SEARCH CARD ================= -->
+
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+
+        <div class="card-header bg-primary text-white">
+
+            <strong>🔍 Search & Filters</strong>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="GET">
+
+                <div class="row g-3">
+
+                    <div class="col-md-7">
+
+                        <input
+                            type="text"
+                            name="search"
+                            class="form-control"
+                            placeholder="Search Topic, Question ID or Question..."
+                            value="{{ search }}">
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <select
+                            class="form-select"
+                            name="topic">
+
+                            <option value="">
+                                All Topics
+                            </option>
+
+                            {% for t in topics %}
+
+                            <option value="{{ t.topic_id }}"
+                            {% if topic == t.topic_id %}selected{% endif %}>
+
+                                {{ t.topic_id }}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-2 d-grid">
+
+                        <button
+                            class="btn btn-primary">
+
+                            Search
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= SUMMARY ================= -->
+
+    <div class="row mb-4">
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm border-0 rounded-4 summary-card">
+
+                <div class="card-body text-center py-1">
+
+                    <h3 class="fw-bold text-primary">
+
+                        {{ total_records }}
+
+                    </h3>
+
+                    <small class="text-muted">
+
+                        Total Questions
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm border-0 rounded-4 summary-card">
+
+                <div class="card-body text-center py-1">
+
+                    <h3 class="fw-bold text-success">
+
+                        {{ topics|length }}
+
+                    </h3>
+
+                    <small class="text-muted">
+
+                        Total Topics
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm border-0 rounded-4 summary-card">
+
+                <div class="card-body text-center py-1">
+
+
+                    <h3 class="fw-bold text-info">
+
+                        {{ dataset.total }}
+
+                    </h3>
+
+                    <small class="text-muted">
+
+                        Total Records
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= TABLE ================= -->
+
+<div class="card shadow-sm border-0 rounded-4">
+
+<div class="card-header bg-dark text-white">
+
+<strong>📋 Dataset Records</strong>
+
+</div>
+
+<div class="table-responsive">
+
+<table class="table table-hover align-middle mb-0">
+
+<thead class="table-light">
+
+<tr>
+
+<th>Topic</th>
+
+<th>Question ID</th>
+
+<th>Topic Name</th>
+
+<th>Sub Topic</th>
+
+<th>Status</th>
+
+<th>Correction</th>
+
+<th class="text-center">Actions</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+
+
+    {% for row in dataset.items %}
+
+<tr>
+
+    <td>
+
+        <span class="fw-bold text-primary">
+
+            {{ row.topic_id }}
+
+        </span>
+
+    </td>
+
+    <td>
+
+        <span class="fw-semibold">
+
+            {{ row.practice_question_id }}
+
+        </span>
+
+    </td>
+
+    <td>
+
+        {{ row.topic_en }}
+
+    </td>
+
+    <td>
+
+        {{ row.sub_topic_en }}
+
+    </td>
+
+    <td>
+
+        {% if not row.attempted %}
+
+            <span class="badge bg-secondary">
+
+                Not Started
+
+            </span>
+
+        {% elif row.question_ml %}
+
+            <span class="badge bg-success">
+
+                Completed
+
+            </span>
+
+        {% else %}
+
+            <span class="badge bg-warning text-dark">
+
+                In Progress
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+    <td>
+
+        {% if row.correction_note %}
+
+            <span class="badge bg-danger">
+
+                Needs Review
+
+            </span>
+
+        {% else %}
+
+            <span class="text-muted">
+
+                —
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+    <td class="text-center">
+
+        <a href="{{ url_for('project.view_question', entry_id=row.id) }}"
+        class="btn btn-sm btn-outline-primary me-1">
+            View
+        </a>
+
+        <a href="{{ url_for('project.edit_question', entry_id=row.id) }}"
+        class="btn btn-sm btn-outline-success me-1">
+            Edit
+        </a>
+
+        <form action="{{ url_for('project.delete_question', entry_id=row.id) }}"
+            method="POST"
+            style="display:inline;">
+
+            <button
+                type="submit"
+                class="btn btn-sm btn-outline-danger"
+                onclick="return confirm('Delete this question?')">
+
+                Delete
+
+            </button>
+
+        </form>
+
+    </td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<nav class="mt-4 d-flex justify-content-center">
+
+<ul class="pagination shadow-sm">
+
+{% if dataset.has_prev %}
+
+<li class="page-item">
+
+<a class="page-link"
+
+href="{{ url_for(
+'project.view_dataset',
+project_id=project.id,
+page=dataset.prev_num,
+search=search,
+topic=topic) }}">
+
+Previous
+
+</a>
+
+</li>
+
+{% endif %}
+
+{% for page_num in dataset.iter_pages() %}
+
+{% if page_num %}
+
+<li class="page-item {% if page_num==dataset.page %}active{% endif %}">
+
+<a class="page-link"
+
+href="{{ url_for(
+'project.view_dataset',
+project_id=project.id,
+page=page_num,
+search=search,
+topic=topic) }}">
+
+{{ page_num }}
+
+</a>
+
+</li>
+
+{% endif %}
+
+{% endfor %}
+
+{% if dataset.has_next %}
+
+<li class="page-item">
+
+<a class="page-link"
+
+href="{{ url_for(
+'project.view_dataset',
+project_id=project.id,
+page=dataset.next_num,
+search=search,
+topic=topic) }}">
+
+Next
+
+</a>
+
+</li>
+
+{% endif %}
+
+</ul>
+
+</nav>
+
+</div>
+
+</div>
+
+{% endblock %}

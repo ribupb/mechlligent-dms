@@ -2,118 +2,182 @@
 
 {% block content %}
 
-<div class="container mt-5">
+{% include "includes/navbar.html" %}
 
-    <h2 class="mb-4">
+<div class="container py-4">
 
-        Workspace
+    <!-- Workspace Header -->
 
-    </h2>
+    <div class="workspace-header mb-5">
 
-    <div class="row mt-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
 
-    <div class="col-md-4">
+            <div>
 
-        <div class="card shadow-sm">
+                <div class="welcome-text mb-2">
 
-            <div class="card-body">
-
-                <h6>Total Projects</h6>
-
-                <h2>{{ total_projects }}</h2>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-4">
-
-        <div class="card shadow-sm">
-
-            <div class="card-body">
-
-                <h6>In Progress</h6>
-
-                <h2>{{ active_projects }}</h2>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-4">
-
-        <div class="card shadow-sm">
-
-            <div class="card-body">
-
-                <h6>Completed</h6>
-
-                <h2>{{ completed_projects }}</h2>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-        <div class="alert alert-info mt-4">
-
-                    <div class="row mt-4">
-
-                {% for project in projects %}
-
-                <div class="col-md-4 mb-4">
-
-                    <div class="card shadow-sm h-100">
-
-                        <div class="card-body">
-
-                            <h5 class="card-title">
-
-                                {{ project.project_name }}
-
-                            </h5>
-
-                            <p class="text-muted">
-
-                                {{ project.description }}
-
-                            </p>
-
-                            <span class="badge bg-primary">
-
-                                {{ project.status }}
-
-                            </span>
-
-                            <hr>
-
-                            <a
-                                href="{{ url_for('project.project_dashboard', project_id=project.id) }}"
-                                class="btn btn-primary w-100">
-
-                                Open Project
-
-                            </a>
-
-                        </div>
-
-                    </div>
+                    Welcome back, <strong>{{ session.get("full_name", "User") }}</strong>
 
                 </div>
 
-                {% endfor %}
+                <h2 class="workspace-title">
+
+                    Workspace
+
+                </h2>
+
+                <p class="workspace-subtitle">
+
+                    Manage all your dataset projects from one place.
+
+                </p>
+
+            </div>
+
+            <a href="{{ url_for('project.create_project') }}"
+               class="btn btn-primary px-4">
+
+                + Create Project
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- Statistics -->
+
+    <div class="row g-3 mb-5">
+
+        <div class="col-md-4">
+
+            <div class="card workspace-stat">
+
+                <div class="card-body">
+
+                    <small>Total Projects</small>
+
+                    <h3>{{ total_projects }}</h3>
+
+                </div>
 
             </div>
 
         </div>
+
+        <div class="col-md-4">
+
+            <div class="card workspace-stat">
+
+                <div class="card-body">
+
+                    <small>In Progress</small>
+
+                    <h3>{{ active_projects }}</h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card workspace-stat">
+
+                <div class="card-body">
+
+                    <small>Completed</small>
+
+                    <h3>{{ completed_projects }}</h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Existing Projects -->
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <div>
+
+            <h4 class="fw-bold mb-1">
+
+                Existing Projects
+
+            </h4>
+
+            <small class="text-muted">
+
+                Open and manage your dataset projects.
+
+            </small>
+
+        </div>
+
+        <span class="badge bg-light text-dark">
+
+            {{ total_projects }} Projects
+
+        </span>
+
+    </div>
+
+
+    <div class="row">
+
+        {% for project in projects %}
+
+        <div class="col-lg-4 col-md-6 mb-4">
+
+            <div class="card project-card h-100">
+
+                <div class="card-body d-flex flex-column">
+
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+
+                        <h5 class="fw-bold mb-0">
+
+                            {{ project.project_name }}
+
+                        </h5>
+
+                        <span class="badge bg-primary">
+
+                            {{ project.status }}
+
+                        </span>
+
+                    </div>
+
+                    <p class="text-muted flex-grow-1">
+
+                        {{ project.description }}
+
+                    </p>
+
+                    <hr>
+
+                    <a href="{{ url_for('project.project_dashboard', project_id=project.id) }}"
+                       class="btn btn-primary w-100">
+
+                        Open Dashboard
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
 
     </div>
 

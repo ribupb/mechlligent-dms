@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% include "includes/navbar.html" %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <h2>{{ entry.practice_question_id }}</h2>
+
+        <div>
+
+            <a href="{{ url_for('project.project_dashboard', project_id=entry.project_id) }}"
+               class="btn btn-secondary">
+                🏠 Dashboard
+            </a>
+
+            <a href="{{ url_for('project.view_dataset', project_id=entry.project_id) }}"
+               class="btn btn-primary">
+                📋 Dataset
+            </a>
+
+            <a href="{{ url_for('project.edit_question', entry_id=entry.id) }}"
+               class="btn btn-warning">
+                ✏ Edit Question
+            </a>
+
+        </div>
+
+    </div>
+
+    <hr>
+
+    <!-- Topic -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            <strong>Topic</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+                    <h6 class="text-primary">🇬🇧 English</h6>
+                    <p>{{ entry.topic_en }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-success">🇮🇳 Malayalam</h6>
+                    <p>{{ entry.topic_ml or "-" }}</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Sub Topic -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            <strong>Sub Topic</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+                    <h6 class="text-primary">🇬🇧 English</h6>
+                    <p>{{ entry.sub_topic_en }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-success">🇮🇳 Malayalam</h6>
+                    <p>{{ entry.sub_topic_ml or "-" }}</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Scenario -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <strong>Scenario</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+                    <h6 class="text-primary">🇬🇧 English</h6>
+                    <p>{{ entry.scenario_en }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-success">🇮🇳 Malayalam</h6>
+                    <p>{{ entry.scenario_ml or "-" }}</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Scenario Explanation -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-info text-white">
+            <strong>Scenario Explanation</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+                    <h6 class="text-primary">🇬🇧 English</h6>
+                    <p>{{ entry.scenario_explanation_en }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-success">🇮🇳 Malayalam</h6>
+                    <p>{{ entry.scenario_explanation_ml or "-" }}</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Memory Shortcut -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-warning">
+            <strong>Memory Shortcut</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+                    <h6 class="text-primary">🇬🇧 English</h6>
+                    <p>{{ entry.memory_shortcut_en }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-success">🇮🇳 Malayalam</h6>
+                    <p>{{ entry.memory_shortcut_ml or "-" }}</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Applies When -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-success text-white">
+            <strong>Applies When</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+                    <h6 class="text-primary">🇬🇧 English</h6>
+                    <p>{{ entry.applies_when_en }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-success">🇮🇳 Malayalam</h6>
+                    <p>{{ entry.applies_when_ml or "-" }}</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Not Applies When -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <strong>Not Applies When</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+                    <h6 class="text-primary">🇬🇧 English</h6>
+                    <p>{{ entry.not_applies_when_en }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-success">🇮🇳 Malayalam</h6>
+                    <p>{{ entry.not_applies_when_ml or "-" }}</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Question -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <strong>Question</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <h6 class="text-primary">🇬🇧 English</h6>
+
+                    <p>{{ entry.question_en }}</p>
+
+                    <ul>
+                        <li>A. {{ entry.option_a_en }}</li>
+                        <li>B. {{ entry.option_b_en }}</li>
+                        <li>C. {{ entry.option_c_en }}</li>
+                    </ul>
+
+                    <p><strong>Answer:</strong> {{ entry.correct_answer_letter }} — {{ entry.correct_answer_en }}</p>
+
+                    <p><strong>Explanation:</strong> {{ entry.explanation_en }}</p>
+
+                    <p><strong>Wrong Answer Tip:</strong> {{ entry.wrong_answer_tip_en }}</p>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <h6 class="text-success">🇮🇳 Malayalam</h6>
+
+                    <p>{{ entry.question_ml or "-" }}</p>
+
+                    <ul>
+                        <li>A. {{ entry.option_a_ml or "-" }}</li>
+                        <li>B. {{ entry.option_b_ml or "-" }}</li>
+                        <li>C. {{ entry.option_c_ml or "-" }}</li>
+                    </ul>
+
+                    <p><strong>Answer:</strong> {{ entry.correct_answer_ml or "-" }}</p>
+
+                    <p><strong>Explanation:</strong> {{ entry.explanation_ml or "-" }}</p>
+
+                    <p><strong>Wrong Answer Tip:</strong> {{ entry.wrong_answer_tip_ml or "-" }}</p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Question Image -->
+    <div class="card mb-3 shadow-sm">
+
+        <div class="card-header bg-secondary text-white">
+            <strong>Question Image Reference</strong>
+        </div>
+
+        <div class="card-body">
+
+            {{ entry.question_image_ref or "-" }}
+
+        </div>
+
+    </div>
+
+    <!-- Correction -->
+
+    {% if entry.correction_note %}
+
+    <div class="card border-danger shadow-sm">
+
+        <div class="card-header bg-danger text-white">
+            <strong>Correction Note</strong>
+        </div>
+
+        <div class="card-body">
+
+            {{ entry.correction_note }}
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

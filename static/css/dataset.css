@@ -1,0 +1,57 @@
+body{
+    background:#f5f7fb;
+}
+
+.card{
+    border:none;
+    transition:.25s;
+}
+
+.card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 .8rem 1.5rem rgba(0,0,0,.12)!important;
+}
+
+.table th{
+    font-weight:600;
+}
+
+.table td{
+    vertical-align:middle;
+}
+
+.badge{
+    font-size:.82rem;
+    padding:.55em .8em;
+}
+
+.btn{
+    border-radius:8px;
+}
+
+.page-link{
+    border-radius:8px!important;
+    margin:0 3px;
+}
+
+.table tbody tr:hover{
+    background:#f8fbff;
+}
+
+.card-header{
+    font-weight:600;
+}
+
+/* Summary Cards */
+.summary-card .card-body{
+    padding:10px 10px;
+}
+
+.summary-card h3{
+    font-size:1.8rem;
+    margin-bottom:4px;
+}
+
+.summary-card small{
+    font-size:.85rem;
+}
