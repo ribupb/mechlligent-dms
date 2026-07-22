@@ -16,7 +16,7 @@
 
                 <div class="welcome-text mb-2">
 
-                    Welcome back, <strong>{{ session.get("full_name", "User") }}</strong>
+                    Welcome back, {{ session.get("full_name", "User") }}
 
                 </div>
 
@@ -103,28 +103,22 @@
 
     <!-- Existing Projects -->
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="project-header d-flex justify-content-between align-items-center mb-3">
 
         <div>
 
             <h4 class="fw-bold mb-1">
-
                 Existing Projects
-
             </h4>
 
             <small class="text-muted">
-
                 Open and manage your dataset projects.
-
             </small>
 
         </div>
 
-        <span class="badge bg-light text-dark">
-
+        <span class="badge bg-light text-dark project-count">
             {{ total_projects }} Projects
-
         </span>
 
     </div>
@@ -134,9 +128,11 @@
 
         {% for project in projects %}
 
-        <div class="col-lg-4 col-md-6 mb-4">
+        <div class="col-lg-4 col-md-6 mb-4"
+        style="animation-delay: {{ loop.index0 * 0.1 }}s;">
 
-            <div class="card project-card h-100">
+            <div class="card project-card h-100"
+             style="animation-delay: {{ loop.index0 * 0.1 }}s;">
 
                 <div class="card-body d-flex flex-column">
 
