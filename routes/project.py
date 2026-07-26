@@ -7,7 +7,8 @@ from flask import (
     redirect,
     url_for,
     flash,
-    send_file
+    send_file,
+    abort
 )
 from utils.auth import login_required
 from flask import session
@@ -177,6 +178,9 @@ def view_dataset(project_id):
     total_records = DatasetEntry.query.filter_by(
         project_id=project.id
     ).count()
+    
+    role = session.get("role")
+    print("CURRENT ROLE =", repr(role))
 
     return render_template(
         "view_dataset.html",
@@ -185,7 +189,8 @@ def view_dataset(project_id):
         search=search,
         topic=topic,
         topics=topics,
-        total_records=total_records
+        total_records=total_records,
+        role=role,
     )
     
     
@@ -596,7 +601,8 @@ def import_dataset(project_id):
 
         if import_mode not in {
             "english_only",
-            "english_malayalam"
+            "english_malayalam",
+            "malayalam_only"
         }:
 
             flash("Invalid import type.", "danger")
@@ -614,17 +620,56 @@ def import_dataset(project_id):
 
 
         # English is always required
-        if (
-            not english_file
-            or not english_file.filename
-        ):
+        # ==========================================
+        # VALIDATE FILES FOR IMPORT MODE
+        # ==========================================
 
-            flash(
-                "Please select the English dataset.",
-                "danger"
-            )
+        if import_mode == "english_only":
 
-            return redirect(request.url)
+            if not english_file or not english_file.filename:
+                flash(
+                    "Please select the English dataset.",
+                    "danger"
+                )
+                return redirect(request.url)
+
+
+        elif import_mode == "english_malayalam":
+
+            if not english_file or not english_file.filename:
+                flash(
+                    "Please select the English dataset.",
+                    "danger"
+                )
+                return redirect(request.url)
+
+            if not malayalam_file or not malayalam_file.filename:
+                flash(
+                    "Please select the Malayalam dataset.",
+                    "danger"
+                )
+                return redirect(request.url)
+
+
+        elif import_mode == "malayalam_only":
+
+            if not malayalam_file or not malayalam_file.filename:
+                flash(
+                    "Please select the Malayalam dataset.",
+                    "danger"
+                )
+                return redirect(request.url)
+
+            existing_count = DatasetEntry.query.filter_by(
+                project_id=project.id
+            ).count()
+
+            if existing_count == 0:
+                flash(
+                    "Import the English dataset before importing Malayalam translations.",
+                    "danger"
+                )
+                return redirect(request.url)
 
 
         # Malayalam required for dual import
@@ -662,13 +707,19 @@ def import_dataset(project_id):
         # SAVE ENGLISH FILE
         # ==========================================
 
-        english_path = os.path.join(
-            upload_folder,
-            "backbone_english.xlsx"
-        )
+        english_path = None
 
-        english_file.save(english_path)
+        if import_mode in {
+            "english_only",
+            "english_malayalam"
+        }:
 
+            english_path = os.path.join(
+                upload_folder,
+                "backbone_english.xlsx"
+            )
+
+            english_file.save(english_path)
 
         # ==========================================
         # SAVE MALAYALAM FILE IF PROVIDED
@@ -676,7 +727,10 @@ def import_dataset(project_id):
 
         malayalam_path = None
 
-        if import_mode == "english_malayalam":
+        if import_mode in {
+            "english_malayalam",
+            "malayalam_only"
+        }:
 
             malayalam_path = os.path.join(
                 upload_folder,
@@ -685,6 +739,228 @@ def import_dataset(project_id):
 
             malayalam_file.save(
                 malayalam_path
+            )
+            
+            
+        # ==========================================
+        # MALAYALAM-ONLY IMPORT
+        # ==========================================
+
+        if import_mode == "malayalam_only":
+
+            try:
+                ml_workbook = load_workbook(
+                    malayalam_path,
+                    data_only=True
+                )
+
+                ml_sheet = ml_workbook.active
+
+                ml_headers = next(
+                    ml_sheet.iter_rows(
+                        min_row=1,
+                        max_row=1,
+                        values_only=True
+                    )
+                )
+
+            except Exception as e:
+
+                print("Failed to open Malayalam workbook:", e)
+
+                flash(
+                    "Could not read the Malayalam Excel file.",
+                    "danger"
+                )
+
+                return redirect(request.url)
+
+
+            # Carry forward shared fields
+            ml_current_topic = None
+            ml_current_sub_topic = None
+            ml_current_scenario = None
+            ml_current_scenario_explanation = None
+            ml_current_memory_shortcut = None
+            ml_current_applies_when = None
+            ml_current_not_applies_when = None
+
+            matched_count = 0
+            unmatched_count = 0
+
+
+            for ml_row in ml_sheet.iter_rows(
+                min_row=2,
+                values_only=True
+            ):
+
+                ml_data = {
+                    header: value
+                    for header, value in zip(
+                        ml_headers,
+                        ml_row
+                    )
+                    if header is not None
+                }
+
+                practice_id = ml_data.get(
+                    "Practice_question_id"
+                )
+
+                if not practice_id:
+                    continue
+
+                practice_id = str(practice_id).strip()
+
+
+                # Remember shared Malayalam values
+                if ml_data.get("Topic"):
+                    ml_current_topic = ml_data["Topic"]
+
+                if ml_data.get("Sub_topic"):
+                    ml_current_sub_topic = ml_data["Sub_topic"]
+
+                if ml_data.get("Scenario"):
+                    ml_current_scenario = ml_data["Scenario"]
+
+                if ml_data.get("Scenario_explanation"):
+                    ml_current_scenario_explanation = (
+                        ml_data["Scenario_explanation"]
+                    )
+
+                if ml_data.get("Memory_shortcut"):
+                    ml_current_memory_shortcut = (
+                        ml_data["Memory_shortcut"]
+                    )
+
+                if ml_data.get("Applies_when"):
+                    ml_current_applies_when = (
+                        ml_data["Applies_when"]
+                    )
+
+                if ml_data.get("Not_applies_when"):
+                    ml_current_not_applies_when = (
+                        ml_data["Not_applies_when"]
+                    )
+
+
+                # Find corresponding existing English entry
+                existing_entry = DatasetEntry.query.filter_by(
+                    project_id=project.id,
+                    practice_question_id=practice_id
+                ).first()
+
+
+                if not existing_entry:
+
+                    unmatched_count += 1
+
+                    print(
+                        "Malayalam ID not found:",
+                        practice_id
+                    )
+
+                    continue
+
+
+                # Fill Malayalam fields
+                existing_entry.topic_ml = ml_current_topic
+                existing_entry.sub_topic_ml = ml_current_sub_topic
+                existing_entry.scenario_ml = ml_current_scenario
+
+                existing_entry.scenario_explanation_ml = (
+                    ml_current_scenario_explanation
+                )
+
+                existing_entry.memory_shortcut_ml = (
+                    ml_current_memory_shortcut
+                )
+
+                existing_entry.applies_when_ml = (
+                    ml_current_applies_when
+                )
+
+                existing_entry.not_applies_when_ml = (
+                    ml_current_not_applies_when
+                )
+
+                existing_entry.question_ml = (
+                    ml_data.get("Questions")
+                )
+
+                existing_entry.option_a_ml = (
+                    ml_data.get("Option_A")
+                )
+
+                existing_entry.option_b_ml = (
+                    ml_data.get("Option_B")
+                )
+
+                existing_entry.option_c_ml = (
+                    ml_data.get("Option_C")
+                )
+
+                existing_entry.correct_answer_ml = (
+                    ml_data.get("Correct_answer")
+                )
+
+                existing_entry.explanation_ml = (
+                    ml_data.get("Explanation")
+                )
+
+                existing_entry.wrong_answer_tip_ml = (
+                    ml_data.get("Wrong_Answer_Tip")
+                )
+
+                matched_count += 1
+
+                print(
+                    "Malayalam matched:",
+                    practice_id
+                )
+
+
+            try:
+
+                db.session.commit()
+
+            except Exception as e:
+
+                db.session.rollback()
+
+                print(
+                    "MALAYALAM IMPORT FAILED:",
+                    e
+                )
+
+                flash(
+                    "Malayalam import failed. No changes were saved.",
+                    "danger"
+                )
+
+                return redirect(request.url)
+
+
+            print(
+                "Malayalam import complete.",
+                "Matched:",
+                matched_count,
+                "Unmatched:",
+                unmatched_count
+            )
+
+            flash(
+                f"Malayalam imported successfully. "
+                f"{matched_count} entries matched, "
+                f"{unmatched_count} unmatched.",
+                "success"
+            )
+
+            return redirect(
+                url_for(
+                    "project.project_dashboard",
+                    project_id=project.id
+                )
             )
 
 
@@ -711,6 +987,155 @@ def import_dataset(project_id):
             )
 
             return redirect(request.url)
+        
+        
+        # ==========================================
+        # READ MALAYALAM DATA
+        # ==========================================
+
+        malayalam_lookup = {}
+
+        if import_mode == "english_malayalam":
+
+            try:
+
+                ml_workbook = load_workbook(
+                    malayalam_path,
+                    data_only=True
+                )
+
+                ml_sheet = ml_workbook.active
+
+                ml_headers = next(
+                    ml_sheet.iter_rows(
+                        min_row=1,
+                        max_row=1,
+                        values_only=True
+                    )
+                )
+
+                # Carry forward shared Malayalam fields
+                ml_current_topic = None
+                ml_current_sub_topic = None
+                ml_current_scenario = None
+                ml_current_scenario_explanation = None
+                ml_current_memory_shortcut = None
+                ml_current_applies_when = None
+                ml_current_not_applies_when = None
+
+                for ml_row in ml_sheet.iter_rows(
+                    min_row=2,
+                    values_only=True
+                ):
+
+                    ml_data = {
+                        header: value
+                        for header, value in zip(
+                            ml_headers,
+                            ml_row
+                        )
+                        if header is not None
+                    }
+
+                    practice_id = ml_data.get(
+                        "Practice_question_id"
+                    )
+
+                    if not practice_id:
+                        continue
+
+                    # Shared fields may only appear on Q1 rows,
+                    # so remember the latest non-empty values.
+
+                    if ml_data.get("Topic"):
+                        ml_current_topic = ml_data["Topic"]
+
+                    if ml_data.get("Sub_topic"):
+                        ml_current_sub_topic = ml_data["Sub_topic"]
+
+                    if ml_data.get("Scenario"):
+                        ml_current_scenario = ml_data["Scenario"]
+
+                    if ml_data.get("Scenario_explanation"):
+                        ml_current_scenario_explanation = (
+                            ml_data["Scenario_explanation"]
+                        )
+
+                    if ml_data.get("Memory_shortcut"):
+                        ml_current_memory_shortcut = (
+                            ml_data["Memory_shortcut"]
+                        )
+
+                    if ml_data.get("Applies_when"):
+                        ml_current_applies_when = (
+                            ml_data["Applies_when"]
+                        )
+
+                    if ml_data.get("Not_applies_when"):
+                        ml_current_not_applies_when = (
+                            ml_data["Not_applies_when"]
+                        )
+
+                    # Store Malayalam data by Practice_question_id
+                    malayalam_lookup[str(practice_id).strip()] = {
+
+                        "topic_ml": ml_current_topic,
+                        "sub_topic_ml": ml_current_sub_topic,
+
+                        "scenario_ml": ml_current_scenario,
+
+                        "scenario_explanation_ml":
+                            ml_current_scenario_explanation,
+
+                        "memory_shortcut_ml":
+                            ml_current_memory_shortcut,
+
+                        "applies_when_ml":
+                            ml_current_applies_when,
+
+                        "not_applies_when_ml":
+                            ml_current_not_applies_when,
+
+                        "question_ml":
+                            ml_data.get("Questions"),
+
+                        "option_a_ml":
+                            ml_data.get("Option_A"),
+
+                        "option_b_ml":
+                            ml_data.get("Option_B"),
+
+                        "option_c_ml":
+                            ml_data.get("Option_C"),
+
+                        "correct_answer_ml":
+                            ml_data.get("Correct_answer"),
+
+                        "explanation_ml":
+                            ml_data.get("Explanation"),
+
+                        "wrong_answer_tip_ml":
+                            ml_data.get("Wrong_Answer_Tip")
+                    }
+
+                print(
+                    "Malayalam rows loaded:",
+                    len(malayalam_lookup)
+                )
+
+            except Exception as e:
+
+                print(
+                    "Failed to read Malayalam workbook:",
+                    e
+                )
+
+                flash(
+                    "Could not read the Malayalam Excel file.",
+                    "danger"
+                )
+
+                return redirect(request.url)
         
         
         # Read column headers (Excel Row 1)
@@ -882,6 +1307,15 @@ def import_dataset(project_id):
             # Skip completely empty rows
             if row_data.get("Practice_question_id") is None:
                 continue
+            
+            practice_id = str(
+                row_data["Practice_question_id"]
+            ).strip()
+
+            ml_data = malayalam_lookup.get(
+                practice_id,
+                {}
+            )
                         
             
             # Remember latest values if they are not empty
@@ -929,10 +1363,10 @@ def import_dataset(project_id):
                 practice_question_id=row_data["Practice_question_id"],
 
                 topic_en=current_topic,
-                topic_ml=None,
+                topic_ml=ml_data.get("topic_ml"),
 
                 sub_topic_en=current_sub_topic,
-                sub_topic_ml=None,
+                sub_topic_ml=ml_data.get("sub_topic_ml"),
 
 
                 scenario_en=current_scenario,
@@ -941,17 +1375,49 @@ def import_dataset(project_id):
                 applies_when_en=current_applies_when,
                 not_applies_when_en=current_not_applies_when,
                 
+                scenario_ml=ml_data.get("scenario_ml"),
+
+                scenario_explanation_ml=ml_data.get(
+                    "scenario_explanation_ml"
+                ),
+
+                memory_shortcut_ml=ml_data.get(
+                    "memory_shortcut_ml"
+                ),
+
+                applies_when_ml=ml_data.get(
+                    "applies_when_ml"
+                ),
+
+                not_applies_when_ml=ml_data.get(
+                    "not_applies_when_ml"
+                ),
+                
 
                 question_en=row_data["Questions"],
+                question_ml=ml_data.get("question_ml"),
                 option_a_en=row_data["Option_A"],
                 option_b_en=row_data["Option_B"],
                 option_c_en=row_data["Option_C"],
+                option_a_ml=ml_data.get("option_a_ml"),
+                option_b_ml=ml_data.get("option_b_ml"),
+                option_c_ml=ml_data.get("option_c_ml"),
 
                 correct_answer_letter=row_data["Correct_answer_letter"],
                 correct_answer_en=row_data["Correct_answer"],
+                correct_answer_ml=ml_data.get(
+                    "correct_answer_ml"
+                ),
 
                 explanation_en=row_data["Explanation"],
                 wrong_answer_tip_en=row_data["Wrong_Answer_Tip"],
+                explanation_ml=ml_data.get(
+                    "explanation_ml"
+                ),
+
+                wrong_answer_tip_ml=ml_data.get(
+                    "wrong_answer_tip_ml"
+                ),
 
                 question_image_ref=row_data["Question_image_ref"],
                 english_completed=False,
@@ -1104,6 +1570,111 @@ def import_dataset(project_id):
                     existing_entry.question_image_ref = (
                         row_data["Question_image_ref"]
                     )
+                    
+                    
+                # ======================================
+                # SAFE MERGE - MALAYALAM
+                # Only fill missing Malayalam values
+                # ======================================
+
+                if ml_data:
+
+                    if not existing_entry.topic_ml and ml_data.get("topic_ml"):
+                        existing_entry.topic_ml = ml_data["topic_ml"]
+
+                    if not existing_entry.sub_topic_ml and ml_data.get("sub_topic_ml"):
+                        existing_entry.sub_topic_ml = ml_data["sub_topic_ml"]
+
+                    if not existing_entry.scenario_ml and ml_data.get("scenario_ml"):
+                        existing_entry.scenario_ml = ml_data["scenario_ml"]
+
+                    if (
+                        not existing_entry.scenario_explanation_ml
+                        and ml_data.get("scenario_explanation_ml")
+                    ):
+                        existing_entry.scenario_explanation_ml = (
+                            ml_data["scenario_explanation_ml"]
+                        )
+
+                    if (
+                        not existing_entry.memory_shortcut_ml
+                        and ml_data.get("memory_shortcut_ml")
+                    ):
+                        existing_entry.memory_shortcut_ml = (
+                            ml_data["memory_shortcut_ml"]
+                        )
+
+                    if (
+                        not existing_entry.applies_when_ml
+                        and ml_data.get("applies_when_ml")
+                    ):
+                        existing_entry.applies_when_ml = (
+                            ml_data["applies_when_ml"]
+                        )
+
+                    if (
+                        not existing_entry.not_applies_when_ml
+                        and ml_data.get("not_applies_when_ml")
+                    ):
+                        existing_entry.not_applies_when_ml = (
+                            ml_data["not_applies_when_ml"]
+                        )
+
+                    if (
+                        not existing_entry.question_ml
+                        and ml_data.get("question_ml")
+                    ):
+                        existing_entry.question_ml = (
+                            ml_data["question_ml"]
+                        )
+
+                    if (
+                        not existing_entry.option_a_ml
+                        and ml_data.get("option_a_ml")
+                    ):
+                        existing_entry.option_a_ml = (
+                            ml_data["option_a_ml"]
+                        )
+
+                    if (
+                        not existing_entry.option_b_ml
+                        and ml_data.get("option_b_ml")
+                    ):
+                        existing_entry.option_b_ml = (
+                            ml_data["option_b_ml"]
+                        )
+
+                    if (
+                        not existing_entry.option_c_ml
+                        and ml_data.get("option_c_ml")
+                    ):
+                        existing_entry.option_c_ml = (
+                            ml_data["option_c_ml"]
+                        )
+
+                    if (
+                        not existing_entry.correct_answer_ml
+                        and ml_data.get("correct_answer_ml")
+                    ):
+                        existing_entry.correct_answer_ml = (
+                            ml_data["correct_answer_ml"]
+                        )
+
+                    if (
+                        not existing_entry.explanation_ml
+                        and ml_data.get("explanation_ml")
+                    ):
+                        existing_entry.explanation_ml = (
+                            ml_data["explanation_ml"]
+                        )
+
+                    if (
+                        not existing_entry.wrong_answer_tip_ml
+                        and ml_data.get("wrong_answer_tip_ml")
+                    ):
+                        existing_entry.wrong_answer_tip_ml = (
+                            ml_data["wrong_answer_tip_ml"]
+                        )
                     
                 print("\nAFTER SAFE MERGE:")
                 print("ID:", existing_entry.practice_question_id)
@@ -2072,16 +2643,37 @@ def review_question(project_id, entry_id):
 
     if shared_fields_locked:
 
-        shared_entry = None
+        q1_id = entry.practice_question_id.rsplit("_Q", 1)[0] + "_Q1"
 
-        if shared_fields_locked:
+        shared_entry = DatasetEntry.query.filter_by(
+            project_id=entry.project_id,
+            practice_question_id=q1_id
+        ).first()
+            
+        # ---------------------------------
+    # REVIEW NAVIGATION
+    # Previous / Next entry
+    # ---------------------------------
 
-            q1_id = entry.practice_question_id.rsplit("_Q", 1)[0] + "_Q1"
+    previous_entry = (
+        DatasetEntry.query
+        .filter(
+            DatasetEntry.project_id == project.id,
+            DatasetEntry.id < entry.id
+        )
+        .order_by(DatasetEntry.id.desc())
+        .first()
+    )
 
-            shared_entry = DatasetEntry.query.filter_by(
-                project_id=entry.project_id,
-                practice_question_id=q1_id
-            ).first()
+    next_entry = (
+        DatasetEntry.query
+        .filter(
+            DatasetEntry.project_id == project.id,
+            DatasetEntry.id > entry.id
+        )
+        .order_by(DatasetEntry.id.asc())
+        .first()
+    )
         
     
 
@@ -2101,5 +2693,83 @@ def review_question(project_id, entry_id):
         subtopic_details={},
         shared_entry=shared_entry,
         shared_fields_locked=shared_fields_locked,
+        previous_entry=previous_entry,
+        next_entry=next_entry,
 
+    )
+    
+@project.route("/project/<int:project_id>/team-queue/<status>")
+@login_required
+def team_queue(project_id, status):
+
+    print("\n===== TEAM QUEUE CALLED =====")
+    print("PROJECT ID:", project_id)
+    print("STATUS FROM URL:", repr(status))
+    print("SESSION ROLE:", repr(session.get("role")))
+
+    project_obj = Project.query.get_or_404(project_id)
+
+    role = session.get("role")
+
+    if role not in ("TEAM", "TEAM_MEMBER"):
+        print("ROLE FAILED - REDIRECTING TO DASHBOARD")
+
+        return redirect(
+            url_for(
+                "project.project_dashboard",
+                project_id=project_id
+            )
+        )
+
+    print("ROLE PASSED")
+
+    allowed_statuses = {
+        DatasetEntry.STATUS_DRAFT,
+        DatasetEntry.STATUS_SUBMITTED,
+        DatasetEntry.STATUS_CORRECTIONS,
+        DatasetEntry.STATUS_APPROVED,
+    }
+
+    print("ALLOWED STATUSES:", allowed_statuses)
+
+    if status not in allowed_statuses:
+        print("INVALID STATUS")
+        abort(404)
+
+    entries = (
+        DatasetEntry.query
+        .filter_by(
+            project_id=project_id,
+            status=status
+        )
+        .order_by(
+            DatasetEntry.topic_id.asc(),
+            DatasetEntry.practice_question_id.asc()
+        )
+        .all()
+    )
+
+    print("ENTRIES FOUND:", len(entries))
+
+    status_labels = {
+        DatasetEntry.STATUS_DRAFT: "Draft",
+        DatasetEntry.STATUS_SUBMITTED: "Pending Review",
+        DatasetEntry.STATUS_CORRECTIONS: "Corrections Requested",
+        DatasetEntry.STATUS_APPROVED: "Approved",
+    }
+
+    current_status_label = status_labels.get(
+        status,
+        status.replace("_", " ").title()
+    )
+
+    print("RENDERING TEAM_QUEUE.HTML")
+    print("=============================\n")
+
+    return render_template(
+        "team_queue.html",
+        project=project_obj,
+        entries=entries,
+        current_status=status,
+        current_status_label=current_status_label
     )

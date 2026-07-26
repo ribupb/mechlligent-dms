@@ -1,0 +1,306 @@
+/* ================================================
+   TEAM QUEUE
+================================================ */
+
+.team-queue-container {
+    max-width: 1450px;
+    margin: 0 auto;
+}
+
+
+/* Header */
+
+.team-queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.team-queue-title {
+    font-size: 23px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.team-queue-subtitle {
+    color: #64748b;
+    font-size: 14px;
+    margin: 0;
+}
+
+.team-queue-count {
+    padding: 7px 14px;
+    background: #eff6ff;
+    color: #2563eb;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* ================================================
+   ENTRY CARD
+================================================ */
+
+.team-entry-card {
+    background: white;
+    border: 1px solid #edf2f7;
+    border-radius: 18px;
+    padding: 18px;
+
+    box-shadow: 0 8px 25px rgba(15, 23, 42, .06);
+
+    transition:
+        transform .3s ease,
+        box-shadow .3s ease,
+        border-color .3s ease;
+
+    height: 100%;
+}
+
+.team-entry-card:hover {
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 18px 35px rgba(37, 99, 235, .10);
+
+    border-color: #dbeafe;
+}
+
+
+/* Card Header */
+
+.team-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+
+    border-bottom: 1px solid #eef2f7;
+}
+
+.team-entry-id {
+    margin: 0 0 4px;
+
+    font-size: 17px;
+    font-weight: 700;
+
+    color: #1f2937;
+}
+
+.team-entry-topic {
+    color: #64748b;
+    font-size: 13px;
+}
+
+
+/* ================================================
+   STATUS
+================================================ */
+
+.team-status {
+    padding: 6px 11px;
+    border-radius: 30px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+.status-draft {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.status-pending {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.status-correction {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+.status-approved {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+
+/* ================================================
+   BODY
+================================================ */
+
+.team-entry-body {
+    min-height: 115px;
+}
+
+.entry-field {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+
+    margin-bottom: 10px;
+
+    font-size: 14px;
+
+    color: #334155;
+}
+
+.entry-label {
+    font-size: 12px;
+    font-weight: 600;
+
+    color: #64748b;
+}
+
+.entry-question {
+    line-height: 1.5;
+}
+
+
+/* Correction */
+
+.correction-box {
+    margin-top: 12px;
+
+    padding: 10px 12px;
+
+    background: #fff7f7;
+
+    border-left: 3px solid #ef4444;
+
+    border-radius: 8px;
+
+    font-size: 13px;
+}
+
+.correction-box strong {
+    color: #dc2626;
+}
+
+.correction-box p {
+    margin: 4px 0 0;
+
+    color: #64748b;
+}
+
+
+/* ================================================
+   ACTIONS
+================================================ */
+
+.team-entry-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    padding-top: 12px;
+    margin-top: 10px;
+
+    border-top: 1px solid #eef2f7;
+}
+
+.team-entry-actions .btn {
+    border-radius: 9px;
+    font-weight: 600;
+
+    padding: 6px 14px;
+}
+
+
+/* ================================================
+   EMPTY STATE
+================================================ */
+
+.team-queue-empty {
+    background: white;
+
+    border-radius: 20px;
+
+    padding: 60px 20px;
+
+    text-align: center;
+
+    border: 1px solid #edf2f7;
+
+    box-shadow:
+        0 10px 30px rgba(15, 23, 42, .06);
+}
+
+.empty-icon {
+    width: 55px;
+    height: 55px;
+
+    margin: 0 auto 15px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #ecfdf5;
+
+    color: #10b981;
+
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.team-queue-empty h4 {
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.team-queue-empty p {
+    color: #64748b;
+
+    font-size: 14px;
+
+    margin-bottom: 20px;
+}
+
+
+/* ================================================
+   ANIMATION
+================================================ */
+
+.team-entry-card {
+    animation: queueFadeUp .45s ease both;
+}
+
+@keyframes queueFadeUp {
+
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+/* ================================================
+   RESPONSIVE
+================================================ */
+
+@media (max-width: 768px) {
+
+    .team-queue-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+}

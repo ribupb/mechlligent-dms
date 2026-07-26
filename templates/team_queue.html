@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block head %}
+    {{ super() }}
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/team_queue.css') }}"
+    >
+{% endblock %}
+
+{% block content %}
+
+{% include "includes/navbar.html" %}
+
+<div class="container-fluid py-4 team-queue-container">
+
+    <!-- =========================
+         HEADER
+    ========================== -->
+
+    <div class="team-queue-header">
+
+        <div>
+            <h4 class="team-queue-title">
+                {{ current_status_label }}
+            </h4>
+
+            <p class="team-queue-subtitle">
+                {% if current_status == "DRAFT" %}
+                    Entries that are still being worked on
+                {% elif current_status == "SUBMITTED" %}
+                    Entries currently waiting for reviewer approval
+                {% elif current_status == "CORRECTIONS_REQUESTED" %}
+                    Entries returned by the reviewer for corrections
+                {% elif current_status == "APPROVED" %}
+                    Entries approved and finalized by the reviewer
+                {% else %}
+                    View entries in this workflow stage
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+
+            <span class="team-queue-count">
+                {{ entries|length }} Entries
+            </span>
+
+            <a
+                href="{{ url_for('project.project_dashboard', project_id=project.id) }}"
+                class="btn btn-outline-secondary btn-sm"
+            >
+                ← Dashboard
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         ENTRIES
+    ========================== -->
+
+    {% if entries %}
+
+        <div class="row g-3">
+
+            {% for entry in entries %}
+
+                <div class="col-lg-6">
+
+                    <div class="team-entry-card">
+
+                        <!-- Card Header -->
+
+                        <div class="team-entry-header">
+
+                            <div>
+
+                                <h5 class="team-entry-id">
+                                    {{ entry.practice_question_id }}
+                                </h5>
+
+                                <span class="team-entry-topic">
+                                    {{ entry.topic_id }} · {{ entry.topic_en }}
+                                </span>
+
+                            </div>
+
+
+                            <!-- STATUS BADGE -->
+
+                            {% if entry.status == entry.STATUS_DRAFT %}
+
+                                <span class="team-status status-draft">
+                                    Draft
+                                </span>
+
+                            {% elif entry.status == entry.STATUS_SUBMITTED %}
+
+                                <span class="team-status status-pending">
+                                    Pending Review
+                                </span>
+
+                            {% elif entry.status == entry.STATUS_CORRECTIONS %}
+
+                                <span class="team-status status-correction">
+                                    Corrections Requested
+                                </span>
+
+                            {% elif entry.status == entry.STATUS_APPROVED %}
+
+                                <span class="team-status status-approved">
+                                    Approved
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- Card Body -->
+
+                        <div class="team-entry-body">
+
+                            <div class="entry-field">
+
+                                <span class="entry-label">
+                                    Sub Topic
+                                </span>
+
+                                <span>
+                                    {{ entry.sub_topic_en or "—" }}
+                                </span>
+
+                            </div>
+
+
+                            <div class="entry-field">
+
+                                <span class="entry-label">
+                                    Question
+                                </span>
+
+                                <span class="entry-question">
+
+                                    {% if entry.question_en %}
+
+                                        {{ entry.question_en[:180] }}
+
+                                        {% if entry.question_en|length > 180 %}
+                                            ...
+                                        {% endif %}
+
+                                    {% else %}
+
+                                        —
+
+                                    {% endif %}
+
+                                </span>
+
+                            </div>
+
+
+                            <!-- Correction Note -->
+
+                            {% if entry.status == entry.STATUS_CORRECTIONS
+                                  and entry.correction_note %}
+
+                                <div class="correction-box">
+
+                                    <strong>
+                                        Reviewer Correction
+                                    </strong>
+
+                                    <p>
+                                        {{ entry.correction_note }}
+                                    </p>
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- =========================
+                             ACTIONS
+                        ========================== -->
+
+                        <div class="team-entry-actions">
+
+
+                            <!-- DRAFT -->
+
+                            {% if entry.status == entry.STATUS_DRAFT %}
+
+                                <a
+                                    href="{{ url_for(
+                                        'project.edit_question',
+                                        entry_id=entry.id
+                                    ) }}"
+                                    class="btn btn-primary btn-sm"
+                                >
+                                    Edit Entry →
+                                </a>
+
+
+                            <!-- CORRECTIONS -->
+
+                            {% elif entry.status == entry.STATUS_CORRECTIONS %}
+
+                                <a
+                                    href="{{ url_for(
+                                        'project.edit_question',
+                                        entry_id=entry.id
+                                    ) }}"
+                                    class="btn btn-danger btn-sm"
+                                >
+                                    Fix Corrections →
+                                </a>
+
+
+                            <!-- PENDING -->
+
+                            {% elif entry.status == entry.STATUS_SUBMITTED %}
+
+                                <a
+                                    href="{{ url_for(
+                                        'project.view_question',
+                                        entry_id=entry.id
+                                    ) }}"
+                                    class="btn btn-outline-primary btn-sm"
+                                >
+                                    View Entry →
+                                </a>
+
+
+                            <!-- APPROVED -->
+
+                            {% elif entry.status == entry.STATUS_APPROVED %}
+
+                                <a
+                                    href="{{ url_for(
+                                        'project.view_question',
+                                        entry_id=entry.id
+                                    ) }}"
+                                    class="btn btn-outline-success btn-sm"
+                                >
+                                    View Entry →
+                                </a>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+    {% else %}
+
+        <!-- =========================
+             EMPTY STATE
+        ========================== -->
+
+        <div class="team-queue-empty">
+
+            <div class="empty-icon">
+                ✓
+            </div>
+
+            <h4>
+                No entries found
+            </h4>
+
+            <p>
+                There are currently no entries in
+                {{ current_status_label }}.
+            </p>
+
+            <a
+                href="{{ url_for(
+                    'project.project_dashboard',
+                    project_id=project.id
+                ) }}"
+                class="btn btn-primary btn-sm"
+            >
+                Back to Dashboard
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

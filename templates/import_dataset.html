@@ -182,6 +182,28 @@
 
                         </div>
 
+                        <div class="form-check mt-3">
+
+                        <input class="form-check-input"
+                            type="radio"
+                            name="import_mode"
+                            id="malayalamOnly"
+                            value="malayalam_only">
+
+                        <label class="form-check-label"
+                            for="malayalamOnly">
+
+                            <strong>Malayalam Only</strong>
+
+                            <div class="text-muted small">
+                                Import Malayalam translations into the existing
+                                English dataset by matching Practice_question_id.
+                            </div>
+
+                        </label>
+
+                    </div>
+
 
                         <hr>
 
@@ -190,17 +212,18 @@
                              ENGLISH FILE
                         =============================== -->
 
-                        <div class="mb-4">
+                        <div class="mb-4" id="englishUploadSection">
 
                             <label class="form-label fw-bold">
                                 English Dataset
                             </label>
 
                             <input type="file"
-                                   name="english_dataset"
-                                   class="form-control"
-                                   accept=".xlsx"
-                                   required>
+                                name="english_dataset"
+                                id="englishDataset"
+                                class="form-control"
+                                accept=".xlsx"
+                                required>
 
                             <div class="form-text">
                                 This file defines the dataset structure and question IDs.
@@ -269,6 +292,7 @@
 
 <script>
 
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const englishOnly =
@@ -276,6 +300,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const englishMalayalam =
         document.getElementById("englishMalayalam");
+
+    const malayalamOnly =
+        document.getElementById("malayalamOnly");
+
+
+    const englishSection =
+        document.getElementById("englishUploadSection");
+
+    const englishFile =
+        document.getElementById("englishDataset");
+
 
     const malayalamSection =
         document.getElementById("malayalamUploadSection");
@@ -286,24 +321,51 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function updateImportMode() {
 
-        if (englishMalayalam.checked) {
+        // ==========================================
+        // ENGLISH ONLY
+        // ==========================================
 
-            malayalamSection.style.display = "block";
+        if (englishOnly.checked) {
 
-            // Malayalam file becomes mandatory
-            malayalamFile.required = true;
-
-        } else {
-
+            englishSection.style.display = "block";
             malayalamSection.style.display = "none";
 
+            englishFile.required = true;
             malayalamFile.required = false;
 
-            // Remove a previously selected Malayalam file
             malayalamFile.value = "";
-
         }
 
+
+        // ==========================================
+        // ENGLISH + MALAYALAM
+        // ==========================================
+
+        else if (englishMalayalam.checked) {
+
+            englishSection.style.display = "block";
+            malayalamSection.style.display = "block";
+
+            englishFile.required = true;
+            malayalamFile.required = true;
+        }
+
+
+        // ==========================================
+        // MALAYALAM ONLY
+        // ==========================================
+
+        else if (malayalamOnly.checked) {
+
+            englishSection.style.display = "none";
+            malayalamSection.style.display = "block";
+
+            englishFile.required = false;
+            malayalamFile.required = true;
+
+            // Remove any previously selected English file
+            englishFile.value = "";
+        }
     }
 
 
@@ -317,11 +379,15 @@ document.addEventListener("DOMContentLoaded", function () {
         updateImportMode
     );
 
+    malayalamOnly.addEventListener(
+        "change",
+        updateImportMode
+    );
+
 
     updateImportMode();
 
 });
 
 </script>
-
 {% endblock %}

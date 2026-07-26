@@ -1413,57 +1413,61 @@
 
 
 
-{% if role == "REVIEWER" and entry %}
+        {% if role == "REVIEWER" and entry %}
 
-    <button type="submit"
-            class="btn btn-success"
-            name="action"
-            value="save">
-        💾 Save Changes
-    </button>
+            {% if entry.status == entry.STATUS_SUBMITTED %}
 
-    {% if entry.status == entry.STATUS_SUBMITTED %}
+                <button type="submit"
+                        class="btn btn-success"
+                        name="action"
+                        value="save">
+                    💾 Save Changes
+                </button>
 
-        <button type="submit"
-                class="btn btn-primary ms-2"
-                name="action"
-                value="approve">
-            ✅ Approve
-        </button>
+                <button type="submit"
+                        class="btn btn-primary ms-2"
+                        name="action"
+                        value="approve">
+                    ✅ Approve
+                </button>
 
-        <button type="submit"
-                class="btn btn-warning ms-2"
-                name="action"
-                value="corrections">
-            ✏️ Request Corrections
-        </button>
+                <button type="submit"
+                        class="btn btn-warning ms-2"
+                        name="action"
+                        value="corrections">
+                    ✏️ Request Corrections
+                </button>
 
-    {% elif entry.status == entry.STATUS_APPROVED %}
+            {% elif entry.status == entry.STATUS_APPROVED %}
 
-        <button class="btn btn-success ms-2" disabled>
-            ✔ Already Approved
-        </button>
+                <button class="btn btn-success ms-2" disabled>
+                    ✔ Already Approved
+                </button>
 
-    {% elif entry.status == entry.STATUS_CORRECTIONS %}
+            {% elif entry.status == entry.STATUS_CORRECTIONS %}
 
-        <button class="btn btn-secondary ms-2" disabled>
-            ⏳ Waiting for Team Resubmission
-        </button>
+                <button class="btn btn-secondary ms-2" disabled>
+                    ⏳ Waiting for Team Resubmission
+                </button>
 
-    {% elif entry.status == entry.STATUS_DRAFT %}
+            {% elif entry.status == entry.STATUS_DRAFT %}
 
-        <button class="btn btn-secondary ms-2" disabled>
-            📝 Draft
-        </button>
+                <button class="btn btn-secondary ms-2" disabled>
+                    📝 Draft
+                </button>
 
-    {% endif %}
+            {% endif %}
 
-{% endif %}
-
-
+        {% endif %}
 
 
 
+        <a href="{{ url_for('project.review_queue',
+                            project_id=project.id,
+                            status='submitted') }}"
+        class="btn btn-outline-primary">
+            📋 Pending Reviews
+        </a>
 
 
     {% if next_entry %}
@@ -1870,6 +1874,52 @@ if(sharedFields && toggleButton){
 
 {% endif %}
 
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const reviewerCanEdit =
+        {{ 'true' if entry.status == entry.STATUS_SUBMITTED else 'false' }};
+
+    if (reviewerCanEdit) {
+        return;
+    }
+
+    const form = document.querySelector("#editor-content form");
+
+    if (!form) {
+        return;
+    }
+
+    // Lock normal inputs and textareas
+    form.querySelectorAll("input, textarea").forEach(function (field) {
+
+        // Don't interfere with modal/comment internals
+        if (field.id === "correctionComment") {
+            return;
+        }
+
+        field.readOnly = true;
+    });
+
+    // Lock dropdowns
+    form.querySelectorAll("select").forEach(function (field) {
+        field.disabled = true;
+    });
+
+    // Lock rich text editors created by editor.js
+    form.querySelectorAll(".rich-editor").forEach(function (editor) {
+        editor.contentEditable = "false";
+    });
+
+    // Disable correction comment buttons
+    form.querySelectorAll(".correction-btn").forEach(function (button) {
+        button.disabled = true;
+    });
+
+});
 </script>
 {% endblock %}
 

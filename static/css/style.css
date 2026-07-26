@@ -623,3 +623,110 @@ body{
     border-radius: 50%;
     z-index: 10;
 }
+
+.navbar-logo {
+    width: 165px;
+    height: auto;
+    display: block;
+}
+
+.logo-brand {
+    padding: 0;
+    margin-right: 32px;
+}
+
+
+
+/* =====================================================
+   NAVBAR NAVIGATION BUTTONS
+===================================================== */
+
+.navbar-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 18px;
+}
+
+
+.navbar-nav-btn {
+    position: relative;
+
+    padding: 8px 13px;
+
+    color: rgba(255, 255, 255, .88);
+    text-decoration: none;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    border-radius: 8px;
+
+    transition:
+        background .22s ease,
+        color .22s ease,
+        transform .22s ease;
+}
+
+
+/* Hover */
+
+.navbar-nav-btn:hover {
+    color: #fff;
+
+    background: rgba(255, 255, 255, .15);
+
+    transform: translateY(-2px);
+}
+
+
+/* Small animated underline */
+
+.navbar-nav-btn::after {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: 3px;
+
+    width: 0;
+    height: 2px;
+
+    background: white;
+
+    border-radius: 5px;
+
+    transform: translateX(-50%);
+
+    transition: width .22s ease;
+}
+
+
+.navbar-nav-btn:hover::after {
+    width: 35%;
+}
+
+
+/* Keep user section separated */
+
+.user-chip {
+    flex-shrink: 0;
+}
+
+
+/* Smaller screens */
+
+@media (max-width: 850px) {
+
+    .navbar-nav-links {
+        gap: 2px;
+        margin-right: 10px;
+    }
+
+    .navbar-nav-btn {
+        font-size: 12px;
+        padding: 7px 8px;
+    }
+
+}

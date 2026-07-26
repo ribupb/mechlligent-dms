@@ -1,64 +1,60 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/dataset.css') }}">
+{% endblock %}
 
-<body class="bg-light">
+{% block content %}
+{% include "includes/navbar.html" %}
+
 
 <div class="container-fluid py-4">
 
-    <!-- ================= HEADER ================= -->
+    
+<div class="dataset-page-header">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="dataset-page-title">
+        <h5>Dataset View</h5>
+        <p>Browse, search and manage dataset records</p>
+    </div>
 
-        <div>
+    <div class="dataset-page-actions">
 
-            <h2 class="fw-bold mb-1">
-                {{ project.project_name }}
-            </h2>
-
-            <p class="text-muted mb-0">
-                Dataset Management System
-            </p>
-
-        </div>
-
-        <div>
+        {% if role == "TEAM_MEMBER" %}
 
             <a href="{{ url_for('project.new_entry', project_id=project.id) }}"
-            class="btn btn-success">
-                + New Entry
-            </a>
-
-            <a href="{{ url_for('project.project_dashboard', project_id=project.id) }}"
-               class="btn btn-outline-secondary me-2">
-
-                Dashboard
-
+               class="btn btn-sm btn-success">
+                ＋ New Entry
             </a>
 
             <a href="{{ url_for('project.continue_editing', project_id=project.id) }}"
-               class="btn btn-success">
-
+               class="btn btn-sm btn-primary">
                 ▶ Continue Editing
-
             </a>
 
 
-        </div>
+        {% elif role == "REVIEWER" %}
+
+            <a href="{{ url_for('project.project_dashboard', project_id=project.id) }}"
+               class="btn btn-sm btn-outline-primary">
+                ← Reviewer Dashboard
+            </a>
+
+        {% endif %}
 
     </div>
 
-
+</div>
 
     <!-- ================= SEARCH CARD ================= -->
 
     <div class="card shadow-sm border-0 rounded-4 mb-4">
 
-        <div class="card-header bg-primary text-white">
-
-            <strong>🔍 Search & Filters</strong>
-
-        </div>
+    <div class="card-header bg-primary text-white">
+        <strong>🔍 Search & Filters</strong>
+    </div>
 
         <div class="card-body">
 
@@ -282,28 +278,39 @@
 
     <td>
 
-        {% if not row.attempted %}
+        {% if row.status == row.STATUS_DRAFT %}
 
-            <span class="badge bg-secondary">
-
-                Not Started
-
+            <span class="workflow-badge status-draft">
+                <span class="status-dot"></span>
+                Draft
             </span>
 
-        {% elif row.question_ml %}
+        {% elif row.status == row.STATUS_SUBMITTED %}
 
-            <span class="badge bg-success">
+            <span class="workflow-badge status-pending">
+                <span class="status-dot"></span>
+                Pending Review
+            </span>
 
-                Completed
+        {% elif row.status == row.STATUS_CORRECTIONS %}
 
+            <span class="workflow-badge status-corrections">
+                <span class="status-dot"></span>
+                Corrections Requested
+            </span>
+
+        {% elif row.status == row.STATUS_APPROVED %}
+
+            <span class="workflow-badge status-approved">
+                <span class="status-dot"></span>
+                Approved
             </span>
 
         {% else %}
 
-            <span class="badge bg-warning text-dark">
-
-                In Progress
-
+            <span class="workflow-badge status-unknown">
+                <span class="status-dot"></span>
+                {{ row.status }}
             </span>
 
         {% endif %}
@@ -332,32 +339,47 @@
 
     </td>
 
-    <td class="text-center">
+        <td class="text-center">
 
-        <a href="{{ url_for('project.view_question', entry_id=row.id) }}"
-        class="btn btn-sm btn-outline-primary me-1">
-            View
-        </a>
+        <div class="dataset-actions">
 
-        <a href="{{ url_for('project.edit_question', entry_id=row.id) }}"
-        class="btn btn-sm btn-outline-success me-1">
-            Edit
-        </a>
+            <a href="{{ url_for('project.view_question', entry_id=row.id) }}"
+            class="dataset-action action-view">
+                View
+            </a>
 
-        <form action="{{ url_for('project.delete_question', entry_id=row.id) }}"
-            method="POST"
-            style="display:inline;">
+            {% if role == "TEAM_MEMBER" %}
 
-            <button
-                type="submit"
-                class="btn btn-sm btn-outline-danger"
-                onclick="return confirm('Delete this question?')">
+                {% if row.status == row.STATUS_DRAFT
+                    or row.status == row.STATUS_CORRECTIONS %}
 
-                Delete
+                    <a href="{{ url_for('project.edit_question', entry_id=row.id) }}"
+                    class="dataset-action action-edit">
+                        Edit
+                    </a>
 
-            </button>
+                {% endif %}
 
-        </form>
+                {% if row.status == row.STATUS_DRAFT %}
+
+                    <form action="{{ url_for('project.delete_question', entry_id=row.id) }}"
+                        method="POST"
+                        class="d-inline">
+
+                        <button
+                            type="submit"
+                            class="dataset-action action-delete"
+                            onclick="return confirm('Delete this question?')">
+                            Delete
+                        </button>
+
+                    </form>
+
+                {% endif %}
+
+            {% endif %}
+
+        </div>
 
     </td>
 </tr>
@@ -451,5 +473,6 @@ Next
 </div>
 
 </div>
+
 
 {% endblock %}

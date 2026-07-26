@@ -2,40 +2,68 @@
 
     <div class="container-fluid px-4">
 
-        <a class="navbar-brand" href="{{ url_for('workspace.workspace_page') }}">
+        <!-- Existing Logo -->
+        <a class="navbar-brand logo-brand"
+           href="{{ url_for('workspace.workspace_page') }}">
 
-            <span class="brand-title">
-                MECHLLIGENT
-            </span>
-
-            <span class="brand-subtitle">
-                Dataset Management System
-            </span>
+            <img src="{{ url_for('static', filename='images/mechlligent-logo.png') }}"
+                 alt="Mechlligent Engineering"
+                 class="navbar-logo">
 
         </a>
 
-        <div class="user-chip">
 
-            <div class="user-avatar">
-                {{ session["full_name"][0] }}
+        <!-- RIGHT SIDE -->
+        <div class="d-flex align-items-center ms-auto">
+
+            <!-- Navigation Buttons -->
+            <div class="navbar-nav-links">
+
+                {% if project %}
+
+                    <a href="{{ url_for('project.view_dataset', project_id=project.id) }}"
+                       class="navbar-nav-btn">
+                        View Dataset
+                    </a>
+
+                    <a href="{{ url_for('project.project_dashboard', project_id=project.id) }}"
+                       class="navbar-nav-btn">
+                        Dashboard
+                    </a>
+
+                {% endif %}
+
+                <a href="{{ url_for('workspace.workspace_page') }}"
+                   class="navbar-nav-btn">
+                    Workspace
+                </a>
+
             </div>
 
-            <div class="user-info">
 
-                <span class="user-name">
-                    {{ session["full_name"] }}
-                </span>
+            <!-- Existing User Chip -->
+            <div class="user-chip">
 
-                <small>Logged In</small>
+                <div class="user-avatar">
+                    {{ session["full_name"][0] }}
+                </div>
+
+                <div class="user-info">
+
+                    <span class="user-name">
+                        {{ session["full_name"] }}
+                    </span>
+
+                    <small>Logged In</small>
+
+                </div>
+
+                <a href="{{ url_for('auth.logout') }}"
+                   class="logout-btn">
+                    Logout
+                </a>
 
             </div>
-
-            <a href="{{ url_for('auth.logout') }}"
-               class="logout-btn">
-
-                Logout
-
-            </a>
 
         </div>
 
