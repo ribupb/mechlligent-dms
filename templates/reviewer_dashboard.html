@@ -4,102 +4,217 @@
 
 {% include "includes/navbar.html" %}
 
-<div class="container mt-4">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/reviewer_dashboard.css') }}">
 
-    <!-- Header -->
+<div class="container-fluid reviewer-container">
 
-    <div class="mb-4">
+    <!-- ================= HEADER ================= -->
 
-        <h2 class="dashboard-title">
-            {{ project.project_name }}
-        </h2>
+    <div class="dashboard-header">
 
-        <p class="dashboard-description">
-            {{ project.description }}
-        </p>
+        <div>
 
-    </div>
+            <h1 class="dashboard-title">
+                {{ project.project_name }}
+            </h1>
 
-    <!-- ================= Statistics ================= -->
-
-
-    <div class="row g-3">
-
-        <div class="col-md-4">
-
-            <div class="card dashboard-stat-card">
-
-                <div class="card-body dashboard-stat-body">
-
-
-                    <h3 class="dashboard-number">{{ total_records }}</h3>
-
-                    <small class="dashboard-label">
-                        Total Questions
-                    </small>
-
-                </div>
-
-            </div>
+            <p class="dashboard-subtitle">
+                {{ project.description }}
+            </p>
 
         </div>
 
-        <div class="col-md-4">
+        <div class="dashboard-badge">
 
-            <div class="card shadow-sm border-info rounded-4">
+            <span class="live-dot"></span>
 
-                <div class="card-body dashboard-stat-body">
-
-
-                    <h3 class="dashboard-number">{{ total_topics }}</h3>
-
-                    <small class="dashboard-label">
-                        Total Topics
-                    </small>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-md-4">
-
-            <div class="card shadow-sm border-success rounded-4">
-
-                <div class="card-body dashboard-stat-body">
-
-
-
-
-                    <h3 class="dashboard-number">{{ progress }}%</h3>
-
-                    <small class="dashboard-label">
-                        Progress
-                    </small>
-
-                </div>
-
-            </div>
+            Reviewer Dashboard
 
         </div>
 
     </div>
 
-    <div class="row g-3 mt-1">
 
-        <div class="col-md-4">
+    <!-- ================= TOP GRID ================= -->
 
-            <div class="card shadow-sm border-success rounded-4">
-
-                <div class="card-body dashboard-stat-body">
+    <div class="row g-4">
 
 
-                    <h3 class="dashboard-number">{{ completed }}</h3>
+        <!-- ================= REVIEW QUEUE ================= -->
 
-                    <small class="dashboard-label">
-                        Completed
-                    </small>
+        <div class="col-lg-4">
+
+            <div class="dashboard-card">
+
+                <div class="card-title-row">
+
+
+
+
+                </div>
+
+                <div class="queue-list">
+
+                    <a href="{{ url_for(
+                        'project.review_queue',
+                        project_id=project.id,
+                        status='draft'
+                        ) }}"
+                        class="queue-item">
+
+                        <div>
+
+                            <div class="queue-name">
+
+                                📝 Draft
+
+                            </div>
+
+                            <small>
+
+                                Not submitted yet
+
+                            </small>
+
+                        </div>
+
+                        <div class="queue-right">
+
+                            <span class="queue-count counter"
+                                  data-target="{{ draft_count }}">
+                                0
+                            </span>
+
+                            <span class="queue-arrow">
+
+                                →
+
+                            </span>
+
+                        </div>
+
+                    </a>
+
+                    <a href="{{ url_for(
+                    'project.review_queue',
+                    project_id=project.id,
+                    status='submitted'
+                    ) }}"
+                    class="queue-item pending">
+
+                        <div>
+
+                            <div class="queue-name">
+
+                                📨 Pending Review
+
+                            </div>
+
+                            <small>
+
+                                Waiting for approval
+
+                            </small>
+
+                        </div>
+
+                        <div class="queue-right">
+
+                            <span class="queue-count counter"
+                                  data-target="{{ submitted_count }}">
+                                0
+                            </span>
+
+                            <span class="queue-arrow">
+
+                                →
+
+                            </span>
+
+                        </div>
+
+                    </a>
+
+                    <a href="{{ url_for(
+                        'project.review_queue',
+                        project_id=project.id,
+                        status='corrections'
+                        ) }}"
+                        class="queue-item corrections">
+
+                        <div>
+
+                            <div class="queue-name">
+
+                                🔄 Corrections Requested
+
+                            </div>
+
+                            <small>
+
+                                Sent back to team
+
+                            </small>
+
+                        </div>
+
+                        <div class="queue-right">
+
+                            <span class="queue-count counter"
+                                  data-target="{{ corrections_requested_count }}">
+                                0
+                            </span>
+
+                            <span class="queue-arrow">
+
+                                →
+
+                            </span>
+
+                        </div>
+
+                    </a>
+
+                    <a href="{{ url_for(
+                        'project.review_queue',
+                        project_id=project.id,
+                        status='approved'
+                        ) }}"
+                        class="queue-item approved">
+
+                        <div>
+
+                            <div class="queue-name">
+
+                                ✅ Approved
+
+                            </div>
+
+                            <small>
+
+                                Finalized dataset
+
+                            </small>
+
+                        </div>
+
+                        <div class="queue-right">
+
+                            <span class="queue-count counter"
+                                  data-target="{{ approved_count }}">
+                                0
+                            </span>
+
+                            <span class="queue-arrow">
+
+                                →
+
+                            </span>
+
+                        </div>
+
+                    </a>
 
                 </div>
 
@@ -107,37 +222,108 @@
 
         </div>
 
-        <div class="col-md-4">
 
-            <div class="card shadow-sm border-warning rounded-4">
+        <!-- ================= OVERVIEW ================= -->
 
-                <div class="card-body dashboard-stat-body">
+        <div class="col-lg-8">
 
+            <div class="dashboard-card">
 
-                    <h3 class="dashboard-number">{{ english_only }}</h3>
+                <div class="card-title-row">
 
-                    <small class="dashboard-label">
-                        In Progress
-                    </small>
+                    <h4>
+
+                        Project Overview
+
+                    </h4>
+
 
                 </div>
 
-            </div>
+                    <div class="progress-section">
 
-        </div>
+                        <h5 class="progress-heading">
+                            Translation Progress
+                            <span>{{ progress }}%</span>
+                        </h5>
 
-        <div class="col-md-4">
+                        <div class="progress modern-progress">
 
-            <div class="card shadow-sm border-danger rounded-4">
+                            <div class="progress-bar animated-progress"
+                                data-progress="{{ progress }}">
+                            </div>
 
-                <div class="card-body dashboard-stat-body">
+                        </div>
 
+                    </div>
 
-                    <h3 class="dashboard-number">{{ corrections }}</h3>
+                <div class="stats-grid">
 
-                    <small class="dashboard-label">
-                        Corrections
-                    </small>
+                    <div class="stat-card">
+
+                        <h2 class="counter"
+                            data-target="{{ total_records }}">
+                            0
+                        </h2>
+
+                        <p>Total Questions</p>
+
+                    </div>
+
+                    <div class="stat-card">
+
+                        <h2 class="counter"
+                            data-target="{{ total_topics }}">
+                            0
+                        </h2>
+
+                        <p>Total Topics</p>
+
+                    </div>
+
+                    <div class="stat-card">
+
+                        <h2 class="counter"
+                            data-target="{{ completed }}">
+                            0
+                        </h2>
+
+                        <p>Completed</p>
+
+                    </div>
+
+                    <div class="stat-card">
+
+                        <h2 class="counter"
+                            data-target="{{ english_only }}">
+                            0
+                        </h2>
+
+                        <p>In Progress</p>
+
+                    </div>
+
+                    <div class="stat-card">
+
+                        <h2 class="counter"
+                            data-target="{{ corrections }}">
+                            0
+                        </h2>
+
+                        <p>Corrections</p>
+
+                    </div>
+
+                    <div class="stat-card">
+
+                        <h2 class="counter"
+                            data-target="{{ total_records-completed }}">
+                            0
+                        </h2>
+
+                        <p>Remaining</p>
+
+                    </div>
 
                 </div>
 
@@ -147,176 +333,84 @@
 
     </div>
 
-    <!-- ================= Progress ================= -->
 
-    <div class="card dashboard-progress-card mt-4 mb-4">
+    <!-- ================= ACTIONS ================= -->
 
-        <div class="card-body">
+    <div class="dashboard-card mt-3">
 
-            <h5 class="progress-title">
+        <div class="card-title-row">
 
-                Translation Progress
+            <h4>
 
-            </h5>
+                Quick Review Actions
 
-            <div class="progress" style="height:12px;">
+            </h4>
 
-                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
 
-                     role="progressbar"
 
-                     style="width: {{ progress }}%;">
+        </div>
 
-                    {{ progress }}%
+        <div class="action-grid">
 
-                </div>
+            <a href="#"
+               class="primary-action">
 
-            </div>
+                <span class="action-icon">
 
-            <div class="d-flex justify-content-between mt-3 progress-footer">
-
-                <span>
-
-                    <strong class="progress-count">
-                        {{ completed }}
-                    </strong>
-
-                    Completed
+                    ▶
 
                 </span>
 
-                <span>
+                <div>
 
-                    <strong class="progress-count">
-                        {{ total_records-completed }}
+                    <strong>
+
+                        Start Reviewing
+
                     </strong>
 
-                    Remaining
+                    <small>
+
+                        Review pending submissions
+
+                    </small>
+
+                </div>
+
+            </a>
+
+            <a href="{{ url_for('project.view_dataset', project_id=project.id) }}"
+               class="action-card">
+
+                📂
+
+                <span>
+
+                    View Dataset
 
                 </span>
 
-            </div>
+            </a>
 
-        </div>
+            <button type="button"
+                    class="action-card"
+                    data-bs-toggle="modal"
+                    data-bs-target="#exportModal">
 
-    </div>
+                📤
 
+                <span>Export Dataset</span>
 
-    <!-- ================= Review Workflow ================= -->
-
-    
-
-
-
-
-        <!-- ================= Action Cards ================= -->
-
-    <div class="row g-3">
-
-        <!-- Quick Actions -->
-
-        <div class="col-md-4">
-
-            <div class="card shadow-sm rounded-4 h-100">
-
-                <div class="card-header bg-primary text-white text-center">
-
-                    <strong>Quick Actions</strong>
-
-                </div>
-
-                <div class="card-body d-flex flex-column align-items-center">
-
-                    <a href="{{ url_for('project.import_dataset', project_id=project.id) }}"
-                       class="btn btn-primary w-75 mb-3">
-
-                        Import Dataset
-
-                    </a>
-
-                    <a href="{{ url_for('project.view_dataset', project_id=project.id) }}"
-                       class="btn btn-outline-primary w-75">
-
-                        View Dataset
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- Editing -->
-
-        <div class="col-md-4">
-
-            <div class="card shadow-sm rounded-4 h-100">
-
-                <div class="card-header bg-success text-white text-center">
-
-                    <strong>Editing</strong>
-
-                </div>
-
-                <div class="card-body d-flex flex-column align-items-center">
-
-                    <a href="{{ url_for('project.continue_editing', project_id=project.id) }}"
-                       class="btn btn-success w-75 mb-3">
-
-                        ▶ Continue Editing
-
-                    </a>
-
-                    <a href="{{ url_for('project.corrections', project_id=project.id) }}"
-                       class="btn btn-outline-danger w-75">
-
-                        📌 Corrections
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- Export -->
-
-        <div class="col-md-4">
-
-            <div class="card shadow-sm rounded-4 h-100">
-
-                <div class="card-header bg-dark text-white text-center">
-
-                    <strong>Export</strong>
-
-                </div>
-
-                <div class="card-body d-flex flex-column align-items-center">
-
-                   <button type="button"
-                            class="action-card"
-                            data-bs-toggle="modal"
-                            data-bs-target="#exportModal">
-
-                        📤
-
-                        <span>
-                            Export Dataset
-                        </span>
-
-                    </button>
-
-                </div>
-
-            </div>
+            </button>
 
         </div>
 
     </div>
 
 </div>
+
+<script src="{{ url_for('static',
+filename='js/reviewer_dashboard.js') }}"></script>
 
 <!-- =========================================
      EXPORT DATASET MODAL

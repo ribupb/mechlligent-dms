@@ -2,46 +2,326 @@
 
 {% block content %}
 
+{% include "includes/navbar.html" %}
+
 <div class="container mt-5">
 
-<h2>
+    <div class="row justify-content-center">
 
-Import Dataset
+        <div class="col-lg-8">
 
-</h2>
+            <div class="card shadow-sm rounded-4">
 
-<hr>
+                <div class="card-header bg-primary text-white">
 
-<form
-method="POST"
-enctype="multipart/form-data">
+                    <h4 class="mb-0">
+                        Import Dataset
+                    </h4>
 
-<div class="mb-3">
+                </div>
 
-<label>
+                   <div class="card-body p-4">
 
-Select Excel Dataset
+    <p class="text-muted mb-4">
+        Choose how you want to initialize the dataset.
+        The English dataset will always be used as the backbone.
+    </p>
 
-</label>
+    <form method="POST"
+          enctype="multipart/form-data"
+          id="importForm">
 
-<input
-type="file"
-name="dataset"
-class="form-control"
-accept=".xlsx"
-required>
+        {% if existing_count > 0 %}
+
+            <div class="alert alert-warning mb-4">
+
+                <h6 class="fw-bold">
+                    ⚠️ This project already contains a dataset
+                </h6>
+
+                <p class="mb-2">
+                    This project currently contains
+                    <strong>{{ existing_count }}</strong>
+                    entries.
+                </p>
+
+                <p class="mb-0">
+                    Choose how the uploaded dataset should be handled.
+                </p>
+
+            </div>
+
+            <div class="mb-4">
+
+                    <label class="form-label fw-bold">
+                        Existing Dataset Action
+                    </label>
+
+                    <div class="form-check mb-3">
+
+                        <input class="form-check-input"
+                            type="radio"
+                            name="existing_action"
+                            id="mergeDataset"
+                            value="merge"
+                            checked>
+
+                        <label class="form-check-label"
+                            for="mergeDataset">
+
+                            <strong>
+                                Merge / Update Existing Dataset
+                            </strong>
+
+                            <div class="text-muted small">
+                                Keep the current dataset and match uploaded
+                                entries using Practice_question_id.
+                            </div>
+
+                        </label>
+
+                    </div>
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+                            type="radio"
+                            name="existing_action"
+                            id="replaceDataset"
+                            value="replace">
+
+                        <label class="form-check-label"
+                            for="replaceDataset">
+
+                            <strong class="text-danger">
+                                Replace Existing Dataset
+                            </strong>
+
+                            <div class="text-muted small">
+                                Replace the current dataset with the uploaded files.
+                                Existing editing and review progress may be lost.
+                            </div>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <hr>
+
+            {% else %}
+
+                <input type="hidden"
+                    name="existing_action"
+                    value="new">
+
+            {% endif %}
+
+
+            <!-- IMPORT TYPE starts here -->
+
+
+                        <!-- ==============================
+                             IMPORT TYPE
+                        =============================== -->
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-bold">
+                                Import Type
+                            </label>
+
+
+                            <div class="form-check mb-3">
+
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="import_mode"
+                                       id="englishOnly"
+                                       value="english_only"
+                                       checked>
+
+                                <label class="form-check-label"
+                                       for="englishOnly">
+
+                                    <strong>English Only</strong>
+
+                                    <div class="text-muted small">
+                                        Import the English backbone.
+                                        Malayalam translation will be completed
+                                        inside the DMS.
+                                    </div>
+
+                                </label>
+
+                            </div>
+
+
+                            <div class="form-check">
+
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="import_mode"
+                                       id="englishMalayalam"
+                                       value="english_malayalam">
+
+                                <label class="form-check-label"
+                                       for="englishMalayalam">
+
+                                    <strong>English + Malayalam</strong>
+
+                                    <div class="text-muted small">
+                                        Import the English backbone together
+                                        with existing Malayalam translations.
+                                    </div>
+
+                                </label>
+
+                            </div>
+
+                        </div>
+
+
+                        <hr>
+
+
+                        <!-- ==============================
+                             ENGLISH FILE
+                        =============================== -->
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-bold">
+                                English Dataset
+                            </label>
+
+                            <input type="file"
+                                   name="english_dataset"
+                                   class="form-control"
+                                   accept=".xlsx"
+                                   required>
+
+                            <div class="form-text">
+                                This file defines the dataset structure and question IDs.
+                            </div>
+
+                        </div>
+
+
+                        <!-- ==============================
+                             MALAYALAM FILE
+                        =============================== -->
+
+                        <div class="mb-4"
+                             id="malayalamUploadSection"
+                             style="display: none;">
+
+                            <label class="form-label fw-bold">
+                                Malayalam Dataset
+                            </label>
+
+                            <input type="file"
+                                   name="malayalam_dataset"
+                                   id="malayalamDataset"
+                                   class="form-control"
+                                   accept=".xlsx">
+
+                            <div class="form-text">
+                                Existing Malayalam translations will be matched
+                                to the English dataset using Practice_question_id.
+                            </div>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-end gap-2">
+
+                            <a href="{{ url_for('project.project_dashboard',
+                                               project_id=project.id) }}"
+                               class="btn btn-outline-secondary">
+
+                                Cancel
+
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+
+                                Import Dataset
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 
-<button
-class="btn btn-primary">
 
-Upload Dataset
+<script>
 
-</button>
+document.addEventListener("DOMContentLoaded", function () {
 
-</form>
+    const englishOnly =
+        document.getElementById("englishOnly");
 
-</div>
+    const englishMalayalam =
+        document.getElementById("englishMalayalam");
+
+    const malayalamSection =
+        document.getElementById("malayalamUploadSection");
+
+    const malayalamFile =
+        document.getElementById("malayalamDataset");
+
+
+    function updateImportMode() {
+
+        if (englishMalayalam.checked) {
+
+            malayalamSection.style.display = "block";
+
+            // Malayalam file becomes mandatory
+            malayalamFile.required = true;
+
+        } else {
+
+            malayalamSection.style.display = "none";
+
+            malayalamFile.required = false;
+
+            // Remove a previously selected Malayalam file
+            malayalamFile.value = "";
+
+        }
+
+    }
+
+
+    englishOnly.addEventListener(
+        "change",
+        updateImportMode
+    );
+
+    englishMalayalam.addEventListener(
+        "change",
+        updateImportMode
+    );
+
+
+    updateImportMode();
+
+});
+
+</script>
 
 {% endblock %}

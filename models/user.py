@@ -13,8 +13,16 @@ class User(db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
 
     password_hash = db.Column(db.String(255), nullable=False)
+    
+    role = db.Column(
+        db.String(20),
+        nullable=False,
+        default="TEAM_MEMBER"
+    )
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+
 
     def __repr__(self):
         return f"<User {self.username}>"

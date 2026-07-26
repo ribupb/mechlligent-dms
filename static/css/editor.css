@@ -1,0 +1,117 @@
+/* =========================================
+   DMS FLOATING EDITOR TOOLBAR
+   ========================================= */
+
+.editor-toolbar {
+    position: fixed;
+
+    top: 50%;
+    transform: translateY(-50%);
+
+    z-index: 1050;
+
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    padding: 7px;
+
+    background: white;
+
+    border: 1px solid #d8dee6;
+    border-radius: 10px;
+
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+}
+
+
+/* LEFT TOOLBAR */
+
+.editor-toolbar.left {
+    left: 18px;
+}
+
+
+/* RIGHT TOOLBAR */
+
+.editor-toolbar.right {
+    right: 18px;
+}
+
+
+/* BUTTONS */
+
+.editor-tool {
+    width: 34px;
+    height: 34px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: transparent;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    font-size: 15px;
+    line-height: 1;
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+
+.editor-tool:hover {
+    background: #eef4ff;
+    transform: scale(1.06);
+}
+
+
+.editor-tool:active {
+    transform: scale(0.95);
+}
+
+
+/* DIVIDER */
+
+.toolbar-divider {
+    height: 1px;
+    width: 24px;
+
+    background: #dee2e6;
+
+    margin: 2px auto;
+}
+
+
+/* Small screens */
+
+@media (max-width: 1100px) {
+
+    .editor-toolbar {
+        display: none;
+    }
+
+}
+
+
+
+.rich-editor {
+    min-height: 110px;
+    height: auto;
+
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+
+    cursor: text;
+}
+
+.rich-editor:focus {
+    outline: none;
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}

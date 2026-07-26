@@ -8,17 +8,20 @@ with app.app_context():
         {
             "full_name": "Ribu",
             "username": "ribu",
-            "password": "ribu123"
+            "password": "ribu123",
+            "role": "TEAM_MEMBER"
         },
         {
             "full_name": "John",
             "username": "john",
-            "password": "john123"
+            "password": "john123",
+            "role": "REVIEWER"
         },
         {
             "full_name": "Gopika",
             "username": "gopika",
-            "password": "gopika123"
+            "password": "gopika123",
+            "role": "TEAM_MEMBER"
         }
     ]
 
@@ -31,7 +34,8 @@ with app.app_context():
 
         user = User(
             full_name=data["full_name"],
-            username=data["username"]
+            username=data["username"],
+            role=data["role"]
         )
 
         user.set_password(data["password"])

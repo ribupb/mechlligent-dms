@@ -10,13 +10,14 @@ from flask import (
     send_file
 )
 from utils.auth import login_required
-
+from flask import session
 from sqlalchemy import or_
-
+from flask import request, jsonify
+from models.field_correction import FieldCorrection
 from models.dataset_entry import DatasetEntry
 from models import db
 from models.project import Project
-
+from datetime import datetime
 project = Blueprint("project", __name__)
 
 @project.route("/project/<int:project_id>/dashboard")
@@ -63,13 +64,40 @@ def project_dashboard(project_id):
         DatasetEntry.correction_note != ""
     ).count()
     progress = 0
+    draft_count = DatasetEntry.query.filter_by(
+    project_id=project.id,
+    status=DatasetEntry.STATUS_DRAFT
+    ).count()
 
+    submitted_count = DatasetEntry.query.filter_by(
+        project_id=project.id,
+        status=DatasetEntry.STATUS_SUBMITTED
+    ).count()
+
+    corrections_requested_count = DatasetEntry.query.filter_by(
+        project_id=project.id,
+        status=DatasetEntry.STATUS_CORRECTIONS
+    ).count()
+
+    approved_count = DatasetEntry.query.filter_by(
+        project_id=project.id,
+        status=DatasetEntry.STATUS_APPROVED
+    ).count()
     if total_records > 0:
         progress = round((completed / total_records) * 100)
+        
+    role = session.get("role")
+
+    template = (
+        "reviewer_dashboard.html"
+        if role == "REVIEWER"
+        else "project_dashboard.html"
+    )
 
     return render_template(
-        "project_dashboard.html",
+        template,
         project=project,
+
         total_records=total_records,
         total_topics=total_topics,
 
@@ -78,7 +106,14 @@ def project_dashboard(project_id):
         completed=completed,
         corrections=corrections,
 
-        progress=progress
+        progress=progress,
+
+        draft_count=draft_count,
+        submitted_count=submitted_count,
+        corrections_requested_count=corrections_requested_count,
+        approved_count=approved_count,
+
+        role=role
     )
     
 @project.route("/project/<int:project_id>/dataset")
@@ -169,47 +204,105 @@ def view_question(entry_id):
 def edit_question(entry_id):
 
     entry = DatasetEntry.query.get_or_404(entry_id)
+    
+    print("\n========== EDIT PAGE DEBUG ==========")
+    print("DB ID:", entry.id)
+    print("Practice ID:", entry.practice_question_id)
+    print("Question:", repr(entry.question_en))
+    print("Option A:", repr(entry.option_a_en))
+    print("Option B:", repr(entry.option_b_en))
+    print("Option C:", repr(entry.option_c_en))
+    print("Correct Answer:", repr(entry.correct_answer_en))
+    print("=====================================\n")
+
+    shared_fields_locked = (
+        entry.practice_question_id
+        and not entry.practice_question_id.endswith("_Q1")
+    )
 
     if request.method == "POST":
+        action = request.form.get("action", "save")
+        
+        if entry.status in [
+            DatasetEntry.STATUS_SUBMITTED,
+            DatasetEntry.STATUS_APPROVED
+        ]:
+            flash("This question is currently locked for editing.", "warning")
+
+            return redirect(
+                url_for(
+                    "project.edit_question",
+                    entry_id=entry.id
+                )
+            )
+                
+        
+    
+        
+        
 
     # -------------------------------
     # Topic
     # -------------------------------
-        entry.topic_en = request.form.get("topic_en")
-        entry.topic_ml = request.form.get("topic_ml")
-
-        selected_subtopic = request.form.get("sub_topic_en")
-
-        if selected_subtopic == "__NEW__":
-            entry.sub_topic_en = request.form.get("new_sub_topic")
-        else:
-            entry.sub_topic_en = selected_subtopic
-        entry.sub_topic_ml = request.form.get("sub_topic_ml")
-
         # -------------------------------
-        # Scenario
+        # Shared Fields
+        # Only Q1 can update these
         # -------------------------------
-        entry.scenario_en = request.form.get("scenario_en")
-        entry.scenario_ml = request.form.get("scenario_ml")
 
-        entry.scenario_explanation_en = request.form.get("scenario_explanation_en")
-        entry.scenario_explanation_ml = request.form.get("scenario_explanation_ml")
+        if not shared_fields_locked:
 
-        entry.memory_shortcut_en = request.form.get("memory_shortcut_en")
-        entry.memory_shortcut_ml = request.form.get("memory_shortcut_ml")
+            # Topic
+            entry.topic_en = request.form.get("topic_en")
+            entry.topic_ml = request.form.get("topic_ml")
 
-        entry.applies_when_en = request.form.get("applies_when_en")
-        entry.applies_when_ml = request.form.get("applies_when_ml")
+            # Sub Topic
+            selected_subtopic = request.form.get("sub_topic_en")
 
-        entry.not_applies_when_en = request.form.get("not_applies_when_en")
-        entry.not_applies_when_ml = request.form.get("not_applies_when_ml")
+            if selected_subtopic == "__NEW__":
+                entry.sub_topic_en = request.form.get("new_sub_topic")
+            else:
+                entry.sub_topic_en = selected_subtopic
+
+            entry.sub_topic_ml = request.form.get("sub_topic_ml")
+
+            # Scenario
+            entry.scenario_en = request.form.get("scenario_en")
+            entry.scenario_ml = request.form.get("scenario_ml")
+
+            entry.scenario_explanation_en = request.form.get(
+                "scenario_explanation_en"
+            )
+            entry.scenario_explanation_ml = request.form.get(
+                "scenario_explanation_ml"
+            )
+
+            entry.memory_shortcut_en = request.form.get(
+                "memory_shortcut_en"
+            )
+            entry.memory_shortcut_ml = request.form.get(
+                "memory_shortcut_ml"
+            )
+
+            entry.applies_when_en = request.form.get(
+                "applies_when_en"
+            )
+            entry.applies_when_ml = request.form.get(
+                "applies_when_ml"
+            )
+
+            entry.not_applies_when_en = request.form.get(
+                "not_applies_when_en"
+            )
+            entry.not_applies_when_ml = request.form.get(
+                "not_applies_when_ml"
+            )
 
         # -------------------------------
         # Question
         # -------------------------------
         entry.question_en = request.form.get("question_en")
         entry.question_ml = request.form.get("question_ml")
-
+        
         entry.option_a_en = request.form.get("option_a_en")
         entry.option_a_ml = request.form.get("option_a_ml")
 
@@ -241,7 +334,66 @@ def edit_question(entry_id):
         entry.malayalam_completed = "malayalam_completed" in request.form
 
         entry.attempted = True
+        
+        if action == "submit_review":
+            entry.status = DatasetEntry.STATUS_SUBMITTED
+            entry.submitted_at = datetime.utcnow()
+            
+        elif action == "approve":
+            entry.status = DatasetEntry.STATUS_APPROVED
+            entry.approved_at = datetime.utcnow()
+
+        elif action == "corrections":
+            entry.status = DatasetEntry.STATUS_CORRECTIONS
+
+        else:
+            # Save Changes
+            if entry.status is None:
+                entry.status = DatasetEntry.STATUS_DRAFT
+                
+                
+        rich_content = dict(entry.rich_content or {})
+
+
+        shared_field_names = {
+            "topic_en",
+            "topic_ml",
+            "sub_topic_en",
+            "sub_topic_ml",
+            "scenario_en",
+            "scenario_ml",
+            "scenario_explanation_en",
+            "scenario_explanation_ml",
+            "memory_shortcut_en",
+            "memory_shortcut_ml",
+            "applies_when_en",
+            "applies_when_ml",
+            "not_applies_when_en",
+            "not_applies_when_ml",
+        }
+
+        for key, value in request.form.items():
+
+            if not key.startswith("rich_"):
+                continue
+
+            field_name = key[5:]
+
+            # Q2+ cannot modify shared-field formatting
+            if shared_fields_locked and field_name in shared_field_names:
+                continue
+
+            if value:
+                rich_content[field_name] = value
+            else:
+                rich_content.pop(field_name, None)
+
+
+        entry.rich_content = rich_content
+        
         db.session.commit()
+        
+        flash(f"Current Status: {entry.status}", "info")
 
         flash("Question updated successfully!", "success")
 
@@ -305,7 +457,39 @@ def edit_question(entry_id):
         .distinct()
         .all()
     )
+    
+    role = session.get("role")
+    team_editing_locked = (
+        entry.status in [
+            DatasetEntry.STATUS_SUBMITTED,
+            DatasetEntry.STATUS_APPROVED
+        ]
+    )
+    
+    corrections = FieldCorrection.query.filter_by(
+        entry_id=entry.id,
+        is_active=True
+    ).all()
+    correction_count = len(corrections)
 
+    correction_map = {}
+
+    for correction in corrections:
+        correction_map[correction.field_name] = correction.comment
+        
+    
+    shared_entry = None
+
+    if shared_fields_locked:
+
+        q1_id = entry.practice_question_id.rsplit("_Q", 1)[0] + "_Q1"
+
+        shared_entry = DatasetEntry.query.filter_by(
+            project_id=entry.project_id,
+            practice_question_id=q1_id
+        ).first()
+        
+        
     return render_template(
         "edit_question.html",
         project=project,
@@ -315,7 +499,14 @@ def edit_question(entry_id):
         topics=topics,
         subtopics=subtopics,
         topic_translations=topic_translations,
-        subtopic_translations=subtopic_translations
+        subtopic_translations=subtopic_translations,
+        role=role,
+        correction_map=correction_map,
+        correction_count=correction_count,
+        subtopic_details={},
+        shared_fields_locked=shared_fields_locked,
+        shared_entry=shared_entry,
+        team_editing_locked=team_editing_locked,
     )
         
     
@@ -324,6 +515,8 @@ def edit_question(entry_id):
 def delete_question(entry_id):
 
     entry = DatasetEntry.query.get_or_404(entry_id)
+    
+    
 
     project_id = entry.project_id
 
@@ -374,40 +567,151 @@ def import_dataset(project_id):
 
     if request.method == "POST":
 
-        file = request.files.get("dataset")
+        # ==========================================
+        # IMPORT SETTINGS
+        # ==========================================
 
-        if not file:
+        import_mode = request.form.get(
+            "import_mode",
+            "english_only"
+        )
+
+        existing_action = request.form.get(
+            "existing_action",
+            "new"
+        )
+
+        english_file = request.files.get(
+            "english_dataset"
+        )
+
+        malayalam_file = request.files.get(
+            "malayalam_dataset"
+        )
+
+
+        # ==========================================
+        # VALIDATE SETTINGS
+        # ==========================================
+
+        if import_mode not in {
+            "english_only",
+            "english_malayalam"
+        }:
+
+            flash("Invalid import type.", "danger")
+            return redirect(request.url)
+
+
+        if existing_action not in {
+            "new",
+            "merge",
+            "replace"
+        }:
+
+            flash("Invalid dataset action.", "danger")
+            return redirect(request.url)
+
+
+        # English is always required
+        if (
+            not english_file
+            or not english_file.filename
+        ):
 
             flash(
-                "Please select an Excel file.",
+                "Please select the English dataset.",
                 "danger"
             )
 
             return redirect(request.url)
 
-        filename = "backbone_dataset.xlsx"
+
+        # Malayalam required for dual import
+        if import_mode == "english_malayalam":
+
+            if (
+                not malayalam_file
+                or not malayalam_file.filename
+            ):
+
+                flash(
+                    "Please select the Malayalam dataset.",
+                    "danger"
+                )
+
+                return redirect(request.url)
+
+
+        # ==========================================
+        # PROJECT UPLOAD FOLDER
+        # ==========================================
 
         upload_folder = os.path.join(
             "uploads",
             f"project_{project.id}"
         )
 
-        os.makedirs(upload_folder, exist_ok=True)
+        os.makedirs(
+            upload_folder,
+            exist_ok=True
+        )
 
-        file_path = os.path.join(upload_folder, filename)
 
-        file.save(file_path)
+        # ==========================================
+        # SAVE ENGLISH FILE
+        # ==========================================
 
-        # Read the uploaded Excel
-        workbook = load_workbook(file_path)
+        english_path = os.path.join(
+            upload_folder,
+            "backbone_english.xlsx"
+        )
 
-        sheet = workbook.active
+        english_file.save(english_path)
+
+
+        # ==========================================
+        # SAVE MALAYALAM FILE IF PROVIDED
+        # ==========================================
+
+        malayalam_path = None
+
+        if import_mode == "english_malayalam":
+
+            malayalam_path = os.path.join(
+                upload_folder,
+                "backbone_malayalam.xlsx"
+            )
+
+            malayalam_file.save(
+                malayalam_path
+            )
+
+
+        # ==========================================
+        # OPEN ENGLISH WORKBOOK
+        # ==========================================
+
+        try:
+
+            workbook = load_workbook(
+                english_path,
+                data_only=True
+            )
+
+            sheet = workbook.active
+
+        except Exception as e:
+
+            print("Failed to open English workbook:", e)
+
+            flash(
+                "Could not read the English Excel file.",
+                "danger"
+            )
+
+            return redirect(request.url)
         
-        # Delete old dataset entries for this project
-        DatasetEntry.query.filter_by(project_id=project.id).delete()
-        db.session.commit()
-
-        print("Old dataset deleted successfully!")
         
         # Read column headers (Excel Row 1)
         headers = next(
@@ -417,6 +721,128 @@ def import_dataset(project_id):
                 values_only=True
             )
         )
+        
+        
+        # ==========================================
+        # VALIDATE REQUIRED COLUMNS
+        # ==========================================
+
+        required_columns = {
+            "Topic_id",
+            "Topic",
+            "Sub_topic",
+            "Scenario",
+            "Concept_image_ref",
+            "Scenario_explanation",
+            "Memory_shortcut",
+            "Applies_when",
+            "Not_applies_when",
+            "Practice_question_id",
+            "Questions",
+            "Option_A",
+            "Option_B",
+            "Option_C",
+            "Correct_answer_letter",
+            "Correct_answer",
+            "Explanation",
+            "Wrong_Answer_Tip",
+            "Question_image_ref"
+        }
+
+        actual_headers = {
+            header
+            for header in headers
+            if header is not None
+        }
+
+        missing_columns = (
+            required_columns - actual_headers
+        )
+
+        if missing_columns:
+
+            flash(
+                "Invalid English dataset. Missing columns: "
+                + ", ".join(sorted(missing_columns)),
+                "danger"
+            )
+
+            return redirect(request.url)
+        
+        
+        
+        # ==========================================
+        # CHECK CURRENT PROJECT DATA
+        # ==========================================
+
+        existing_count = DatasetEntry.query.filter_by(
+            project_id=project.id
+        ).count()
+
+
+        # A "new" import is only valid when empty
+        if (
+            existing_action == "new"
+            and existing_count > 0
+        ):
+
+            flash(
+                "This project already contains data. "
+                "Please choose Merge or Replace.",
+                "warning"
+            )
+
+            return redirect(request.url)
+
+
+        # Merge requires existing data
+        if (
+            existing_action == "merge"
+            and existing_count == 0
+        ):
+
+            existing_action = "new"
+
+
+        # Replace is allowed, but deletion happens
+        # only AFTER the uploaded file was validated.
+# Replace is allowed, but deletion happens
+# only AFTER the uploaded file was validated.
+        if existing_action == "replace":
+
+            # Get IDs of existing dataset entries
+            existing_entry_ids = [
+                entry.id
+                for entry in DatasetEntry.query.filter_by(
+                    project_id=project.id
+                ).all()
+            ]
+
+            # Delete corrections connected to those entries FIRST
+            if existing_entry_ids:
+
+                FieldCorrection.query.filter(
+                    FieldCorrection.entry_id.in_(
+                        existing_entry_ids
+                    )
+                ).delete(
+                    synchronize_session=False
+                )
+
+            # Now delete the dataset entries
+            DatasetEntry.query.filter_by(
+                project_id=project.id
+            ).delete(
+                synchronize_session=False
+            )
+
+            # IMPORTANT:
+            # Still do NOT commit here.
+            # Your commit at the end of the import handles everything.
+
+            print(
+                "Existing entries and corrections marked for replacement."
+            )
 
         print("\nHEADERS")
         print(headers)
@@ -534,15 +960,170 @@ def import_dataset(project_id):
                 has_correction=False
             )
             
-            try:
+            # ======================================
+            # SAVE / MERGE ENTRY
+            # ======================================
+
+            if existing_action == "merge":
+
+                existing_entry = DatasetEntry.query.filter_by(
+                    project_id=project.id,
+                    practice_question_id=row_data[
+                        "Practice_question_id"
+                    ]
+                ).first()
+
+            else:
+
+                existing_entry = None
+
+
+            if existing_entry:
+
+        # ======================================
+        # SAFE MERGE
+        # Preserve existing DMS data.
+        # Only fill fields that are currently empty.
+        # ======================================
+        
+                print("\n========== MERGE DEBUG ==========")
+                print("ID:", existing_entry.practice_question_id)
+
+                print("DATABASE:")
+                print("Option B:", repr(existing_entry.option_b_en))
+                print("Option C:", repr(existing_entry.option_c_en))
+
+                print("EXCEL:")
+                print("Option B:", repr(row_data.get("Option_B")))
+                print("Option C:", repr(row_data.get("Option_C")))
+
+                print("=================================\n")
+
+                if not existing_entry.topic_id and current_topic_id:
+                    existing_entry.topic_id = current_topic_id
+
+                if not existing_entry.topic_en and current_topic:
+                    existing_entry.topic_en = current_topic
+
+                if not existing_entry.sub_topic_en and current_sub_topic:
+                    existing_entry.sub_topic_en = current_sub_topic
+
+                if not existing_entry.scenario_en and current_scenario:
+                    existing_entry.scenario_en = current_scenario
+
+                if (
+                    not existing_entry.scenario_explanation_en
+                    and current_scenario_explanation
+                ):
+                    existing_entry.scenario_explanation_en = (
+                        current_scenario_explanation
+                    )
+
+                if (
+                    not existing_entry.memory_shortcut_en
+                    and current_memory_shortcut
+                ):
+                    existing_entry.memory_shortcut_en = (
+                        current_memory_shortcut
+                    )
+
+                if (
+                    not existing_entry.applies_when_en
+                    and current_applies_when
+                ):
+                    existing_entry.applies_when_en = current_applies_when
+
+                if (
+                    not existing_entry.not_applies_when_en
+                    and current_not_applies_when
+                ):
+                    existing_entry.not_applies_when_en = (
+                        current_not_applies_when
+                    )
+
+                if (
+                    not existing_entry.question_en
+                    and row_data.get("Questions")
+                ):
+                    existing_entry.question_en = row_data["Questions"]
+
+                if (
+                    not existing_entry.option_a_en
+                    and row_data.get("Option_A")
+                ):
+                    existing_entry.option_a_en = row_data["Option_A"]
+
+                if (
+                    not existing_entry.option_b_en
+                    and row_data.get("Option_B")
+                ):
+                    existing_entry.option_b_en = row_data["Option_B"]
+
+                if (
+                    not existing_entry.option_c_en
+                    and row_data.get("Option_C")
+                ):
+                    existing_entry.option_c_en = row_data["Option_C"]
+
+                if (
+                    not existing_entry.correct_answer_letter
+                    and row_data.get("Correct_answer_letter")
+                ):
+                    existing_entry.correct_answer_letter = (
+                        row_data["Correct_answer_letter"]
+                    )
+
+                if (
+                    not existing_entry.correct_answer_en
+                    and row_data.get("Correct_answer")
+                ):
+                    existing_entry.correct_answer_en = (
+                        row_data["Correct_answer"]
+                    )
+
+                if (
+                    not existing_entry.explanation_en
+                    and row_data.get("Explanation")
+                ):
+                    existing_entry.explanation_en = (
+                        row_data["Explanation"]
+                    )
+
+                if (
+                    not existing_entry.wrong_answer_tip_en
+                    and row_data.get("Wrong_Answer_Tip")
+                ):
+                    existing_entry.wrong_answer_tip_en = (
+                        row_data["Wrong_Answer_Tip"]
+                    )
+
+                if (
+                    not existing_entry.question_image_ref
+                    and row_data.get("Question_image_ref")
+                ):
+                    existing_entry.question_image_ref = (
+                        row_data["Question_image_ref"]
+                    )
+                    
+                print("\nAFTER SAFE MERGE:")
+                print("ID:", existing_entry.practice_question_id)
+                print("Option B:", repr(existing_entry.option_b_en))
+                print("Option C:", repr(existing_entry.option_c_en))
+
+                print(
+                    "Merged:",
+                    existing_entry.practice_question_id
+                )
+
+            else:
+
                 db.session.add(entry)
-                db.session.commit()
-                print(f"Imported: {entry.practice_question_id}")
-            except Exception as e:
-                db.session.rollback()
-                print(f"FAILED: {entry.practice_question_id}")
-                print(e)
-                raise
+
+                print(
+                    "Added:",
+                    entry.practice_question_id
+                )
+
 
         print("All rows imported successfully!")
 
@@ -559,10 +1140,25 @@ def import_dataset(project_id):
         print("Columns:", total_columns)
         print("=" * 50)
 
-        project.template_excel_path = file_path
+        project.template_excel_path = english_path
         project.status = "Dataset Imported"
 
-        db.session.commit()
+        try:
+            db.session.commit()
+            print("\nDATABASE COMMIT SUCCESSFUL")
+
+
+        except Exception as e:
+            db.session.rollback()
+
+            print("IMPORT FAILED:", e)
+
+            flash(
+                "Import failed. No database changes were saved.",
+                "danger"
+            )
+
+            return redirect(request.url)
 
         flash(
             "Dataset uploaded successfully!",
@@ -576,26 +1172,84 @@ def import_dataset(project_id):
             )
         )
 
+    existing_count = DatasetEntry.query.filter_by(
+        project_id=project.id
+    ).count()
+
     return render_template(
         "import_dataset.html",
-        project=project
+        project=project,
+        existing_count=existing_count
     )
     
     
     
 @project.route("/project/<int:project_id>/export/<language>")
+@login_required
+
 def export_dataset(project_id, language):
 
     project = Project.query.get_or_404(project_id)
 
-    entries = DatasetEntry.query.filter_by(
+    # ---------------------------------
+    # Export mode
+    # ---------------------------------
+
+    export_mode = request.args.get("mode", "final")
+
+    query = DatasetEntry.query.filter_by(
         project_id=project.id
-    ).order_by(
+    )
+
+    if export_mode == "final":
+
+        # Final dataset = Approved entries only
+        query = query.filter(
+            DatasetEntry.status == DatasetEntry.STATUS_APPROVED
+        )
+
+    elif export_mode == "custom":
+
+        selected_statuses = request.args.getlist("status")
+
+        if not selected_statuses:
+            flash("Please select at least one status to export.", "warning")
+
+            return redirect(
+                url_for(
+                    "project.project_dashboard",
+                    project_id=project.id
+                )
+            )
+
+        query = query.filter(
+            DatasetEntry.status.in_(selected_statuses)
+        )
+
+    else:
+
+        flash("Invalid export mode.", "danger")
+
+        return redirect(
+            url_for(
+                "project.project_dashboard",
+                project_id=project.id
+            )
+        )
+
+    entries = query.order_by(
         DatasetEntry.row_number
     ).all()
 
     if not entries:
-        flash("No dataset available.", "warning")
+
+        if export_mode == "final":
+            message = "No approved entries available for final export."
+        else:
+            message = "No entries found for the selected statuses."
+
+        flash(message, "warning")
+
         return redirect(
             url_for(
                 "project.project_dashboard",
@@ -648,6 +1302,9 @@ def export_dataset(project_id, language):
     "Question_image_ref"
 
 ]
+    
+    if export_mode == "custom":
+        headers.append("Status")
 
     sheet.append(headers)
     
@@ -714,9 +1371,9 @@ def export_dataset(project_id, language):
     
     previous_topic = None
 
+
     for entry in entries:
-        
-        
+
         if entry.topic_id != previous_topic:
 
             topic_id = entry.topic_id
@@ -728,58 +1385,51 @@ def export_dataset(project_id, language):
 
             concept_image_ref = entry.topic_id.lower()
 
-            scenario_explanation_value = getattr(entry, scenario_explanation)
+            scenario_explanation_value = getattr(
+                entry,
+                scenario_explanation
+            )
 
-            memory_shortcut_value = getattr(entry, memory_shortcut)
+            memory_shortcut_value = getattr(
+                entry,
+                memory_shortcut
+            )
 
-            applies_when_value = getattr(entry, applies_when)
+            applies_when_value = getattr(
+                entry,
+                applies_when
+            )
 
-            not_applies_when_value = getattr(entry, not_applies_when)
+            not_applies_when_value = getattr(
+                entry,
+                not_applies_when
+            )
 
             previous_topic = entry.topic_id
 
         else:
 
             topic_id = ""
-
             topic_value = ""
-
             sub_topic_value = ""
-
             scenario_value = ""
-
             concept_image_ref = ""
-
             scenario_explanation_value = ""
-
             memory_shortcut_value = ""
-
             applies_when_value = ""
-
             not_applies_when_value = ""
-        
-        
-        
-        
 
-        sheet.append([
+        # Every entry gets exported
+        row = [
 
             topic_id,
-
             topic_value,
-
             sub_topic_value,
-
             scenario_value,
-
             concept_image_ref,
-
             scenario_explanation_value,
-
             memory_shortcut_value,
-
             applies_when_value,
-
             not_applies_when_value,
 
             entry.practice_question_id,
@@ -787,9 +1437,7 @@ def export_dataset(project_id, language):
             getattr(entry, question),
 
             getattr(entry, option_a),
-
             getattr(entry, option_b),
-
             getattr(entry, option_c),
 
             entry.correct_answer_letter,
@@ -802,9 +1450,13 @@ def export_dataset(project_id, language):
 
             entry.question_image_ref
 
-        ])
+        ]
 
-    import os
+        if export_mode == "custom":
+            row.append(entry.status)
+
+        sheet.append(row)
+
 
     from io import BytesIO
 
@@ -817,7 +1469,10 @@ def export_dataset(project_id, language):
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"{project.project_name}_{language}.xlsx",
+        download_name=(
+            f"{project.project_name}_{language}_"
+            f"{'final' if export_mode == 'final' else 'custom'}.xlsx"
+        ),
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
         
@@ -1003,6 +1658,7 @@ def new_entry(project_id):
         db.session.commit()
 
         flash("New dataset entry created successfully!", "success")
+        
 
         return redirect(
             url_for(
@@ -1052,6 +1708,37 @@ def new_entry(project_id):
         )
         .all()
     )
+    
+    subtopic_details = {}
+
+    entries = DatasetEntry.query.filter_by(
+        project_id=project.id
+    ).all()
+
+    for e in entries:
+
+        key = f"{e.topic_en}|{e.sub_topic_en}"
+
+        if key not in subtopic_details:
+
+            subtopic_details[key] = {
+
+                "scenario_en": e.scenario_en,
+                "scenario_ml": e.scenario_ml,
+
+                "scenario_explanation_en": e.scenario_explanation_en,
+                "scenario_explanation_ml": e.scenario_explanation_ml,
+
+                "memory_shortcut_en": e.memory_shortcut_en,
+                "memory_shortcut_ml": e.memory_shortcut_ml,
+
+                "applies_when_en": e.applies_when_en,
+                "applies_when_ml": e.applies_when_ml,
+
+                "not_applies_when_en": e.not_applies_when_en,
+                "not_applies_when_ml": e.not_applies_when_ml
+            }
+    
     return render_template(
         "edit_question.html",
         project=project,
@@ -1061,5 +1748,358 @@ def new_entry(project_id):
         topics=topics,
         subtopics=subtopics,
         topic_translations=topic_translations,
-        subtopic_translations=subtopic_translations
+        subtopic_translations=subtopic_translations,
+        correction_map={},
+        correction_count=0,
+        role=session.get("role"),
+        subtopic_details=subtopic_details,
+        shared_fields_locked=False,
+        shared_entry=None,
+    )
+    
+    
+    
+    
+@project.route("/project/<int:project_id>/review-queue/<status>")
+@login_required
+def review_queue(project_id, status):
+
+    project = Project.query.get_or_404(project_id)
+
+    status_map = {
+        "draft": DatasetEntry.STATUS_DRAFT,
+        "submitted": DatasetEntry.STATUS_SUBMITTED,
+        "corrections": DatasetEntry.STATUS_CORRECTIONS,
+        "approved": DatasetEntry.STATUS_APPROVED
+    }
+
+    if status not in status_map:
+        flash("Invalid status.", "danger")
+        return redirect(
+            url_for(
+                "project.project_dashboard",
+                project_id=project.id
+            )
+        )
+
+    entries = DatasetEntry.query.filter_by(
+        project_id=project.id,
+        status=status_map[status]
+    ).order_by(
+        DatasetEntry.row_number
+    ).all()
+
+    return render_template(
+        "review_queue.html",
+        project=project,
+        entries=entries,
+        current_status=status
+    )
+    
+    
+    
+    
+@project.route("/correction/save", methods=["POST"])
+@login_required
+def save_field_correction():
+
+    data = request.get_json()
+
+    entry_id = data.get("entry_id")
+    field_name = data.get("field_name")
+    comment = data.get("comment")
+
+    correction = FieldCorrection.query.filter_by(
+        entry_id=entry_id,
+        field_name=field_name,
+        is_active=True
+    ).first()
+
+    if correction:
+
+        correction.comment = comment
+
+    else:
+
+        correction = FieldCorrection(
+            entry_id=entry_id,
+            field_name=field_name,
+            comment=comment,
+            created_by=session["user_id"]
+        )
+
+        db.session.add(correction)
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
+    
+    
+    
+@project.route("/correction/<int:entry_id>")
+@login_required
+def get_field_corrections(entry_id):
+
+    corrections = FieldCorrection.query.filter_by(
+        entry_id=entry_id,
+        is_active=True
+    ).all()
+
+    result = {}
+
+    for correction in corrections:
+        result[correction.field_name] = correction.comment
+
+    return jsonify(result)
+    
+@project.route(
+    "/project/<int:project_id>/review/<int:entry_id>",
+    methods=["GET", "POST"]
+)
+@login_required
+def review_question(project_id, entry_id):
+
+    project = Project.query.get_or_404(project_id)
+
+    entry = DatasetEntry.query.get_or_404(entry_id)
+    
+    shared_fields_locked = (
+        entry.practice_question_id
+        and not entry.practice_question_id.endswith("_Q1")
+    )
+    
+    if request.method == "POST":
+
+        action = request.form.get("action")
+        
+        
+        
+        # Shared Fields
+        # Only Q1 can update these
+        # ---------------------------------
+
+        if not shared_fields_locked:
+
+            entry.topic_en = request.form.get("topic_en")
+            entry.topic_ml = request.form.get("topic_ml")
+
+            entry.sub_topic_en = request.form.get("sub_topic_en")
+            entry.sub_topic_ml = request.form.get("sub_topic_ml")
+
+            entry.scenario_en = request.form.get("scenario_en")
+            entry.scenario_ml = request.form.get("scenario_ml")
+
+            entry.scenario_explanation_en = request.form.get(
+                "scenario_explanation_en"
+            )
+            entry.scenario_explanation_ml = request.form.get(
+                "scenario_explanation_ml"
+            )
+
+            entry.memory_shortcut_en = request.form.get(
+                "memory_shortcut_en"
+            )
+            entry.memory_shortcut_ml = request.form.get(
+                "memory_shortcut_ml"
+            )
+
+            entry.applies_when_en = request.form.get(
+                "applies_when_en"
+            )
+            entry.applies_when_ml = request.form.get(
+                "applies_when_ml"
+            )
+
+            entry.not_applies_when_en = request.form.get(
+                "not_applies_when_en"
+            )
+            entry.not_applies_when_ml = request.form.get(
+                "not_applies_when_ml"
+            )
+
+        entry.question_en = request.form.get("question_en")
+        entry.question_ml = request.form.get("question_ml")
+
+        entry.option_a_en = request.form.get("option_a_en")
+        entry.option_a_ml = request.form.get("option_a_ml")
+
+        entry.option_b_en = request.form.get("option_b_en")
+        entry.option_b_ml = request.form.get("option_b_ml")
+
+        entry.option_c_en = request.form.get("option_c_en")
+        entry.option_c_ml = request.form.get("option_c_ml")
+
+        entry.correct_answer_en = request.form.get("correct_answer_en")
+        entry.correct_answer_ml = request.form.get("correct_answer_ml")
+
+        entry.correct_answer_letter = request.form.get("correct_answer_letter")
+
+        entry.explanation_en = request.form.get("explanation_en")
+        entry.explanation_ml = request.form.get("explanation_ml")
+
+        entry.wrong_answer_tip_en = request.form.get("wrong_answer_tip_en")
+        entry.wrong_answer_tip_ml = request.form.get("wrong_answer_tip_ml")
+
+        entry.question_image_ref = request.form.get("question_image_ref")
+        
+        # Save DMS-only rich formatting
+        # ---------------------------------
+
+        rich_content = dict(entry.rich_content or {})
+
+        shared_field_names = {
+            "topic_en",
+            "topic_ml",
+            "sub_topic_en",
+            "sub_topic_ml",
+            "scenario_en",
+            "scenario_ml",
+            "scenario_explanation_en",
+            "scenario_explanation_ml",
+            "memory_shortcut_en",
+            "memory_shortcut_ml",
+            "applies_when_en",
+            "applies_when_ml",
+            "not_applies_when_en",
+            "not_applies_when_ml",
+        }
+
+        for key, value in request.form.items():
+
+            if not key.startswith("rich_"):
+                continue
+
+            field_name = key[5:]
+
+            # Q2+ cannot change shared formatting
+            if shared_fields_locked and field_name in shared_field_names:
+                continue
+
+            if value:
+                rich_content[field_name] = value
+            else:
+                rich_content.pop(field_name, None)
+
+        entry.rich_content = rich_content
+
+        if action == "approve":
+            entry.status = DatasetEntry.STATUS_APPROVED
+            entry.approved_at = datetime.utcnow()
+
+            # Deactivate all reviewer comments after approval
+            FieldCorrection.query.filter_by(
+                entry_id=entry.id,
+                is_active=True
+            ).update({
+                "is_active": False
+            })
+
+        elif action == "corrections":
+            entry.status = DatasetEntry.STATUS_CORRECTIONS
+
+        db.session.commit()
+
+        flash("Status updated successfully!", "success")
+
+        return redirect(
+            url_for(
+                "project.review_question",
+                project_id=project.id,
+                entry_id=entry.id
+            )
+        )
+    
+    
+    role = session.get("role")
+    corrections = FieldCorrection.query.filter_by(
+        entry_id=entry.id,
+        is_active=True
+    ).all()
+
+    correction_map = {
+        c.field_name: c.comment
+        for c in corrections
+    }
+    
+    correction_count = len(correction_map)
+    
+    topics = (
+    db.session.query(DatasetEntry.topic_en)
+        .distinct()
+        .order_by(DatasetEntry.topic_en)
+        .all()
+    )
+
+    topics = [t[0] for t in topics if t[0]]
+
+    subtopics = (
+        db.session.query(
+            DatasetEntry.topic_en,
+            DatasetEntry.sub_topic_en
+        )
+        .distinct()
+        .order_by(
+            DatasetEntry.topic_en,
+            DatasetEntry.sub_topic_en
+        )
+        .all()
+    )
+
+    topic_translations = (
+        db.session.query(
+            DatasetEntry.topic_en,
+            DatasetEntry.topic_ml
+        )
+        .distinct()
+        .all()
+    )
+
+    subtopic_translations = (
+        db.session.query(
+            DatasetEntry.sub_topic_en,
+            DatasetEntry.sub_topic_ml
+        )
+        .distinct()
+        .all()
+    )
+    
+
+    
+    
+    shared_entry = None
+
+    if shared_fields_locked:
+
+        shared_entry = None
+
+        if shared_fields_locked:
+
+            q1_id = entry.practice_question_id.rsplit("_Q", 1)[0] + "_Q1"
+
+            shared_entry = DatasetEntry.query.filter_by(
+                project_id=entry.project_id,
+                practice_question_id=q1_id
+            ).first()
+        
+    
+
+    return render_template(
+        "review_question.html",
+        project=project,
+        entry=entry,
+        role=role,
+
+        topics=topics,
+        subtopics=subtopics,
+        topic_translations=topic_translations,
+        subtopic_translations=subtopic_translations,
+
+        correction_map=correction_map,
+        correction_count=correction_count,
+        subtopic_details={},
+        shared_entry=shared_entry,
+        shared_fields_locked=shared_fields_locked,
+
     )

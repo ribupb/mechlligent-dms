@@ -23,6 +23,7 @@ def login():
             session["user_id"] = user.id
             session["username"] = user.username
             session["full_name"] = user.full_name
+            session["role"] = user.role
 
             return redirect(url_for("workspace.workspace_page"))
 

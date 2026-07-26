@@ -1,0 +1,1875 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% set toolbar_side = "left" %}
+{% include "includes/editor_toolbar.html" %}
+
+{% set toolbar_side = "right" %}
+{% include "includes/editor_toolbar.html" %}
+
+{% include "includes/navbar.html" %}
+
+<div class="container mt-4">
+
+
+<div id="editor-content">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+
+            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm mb-4 flash-alert"
+                role="alert">
+
+                {{ message }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+                </button>
+
+            </div>
+
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            {% if entry %}
+
+                <h2>Review Question</h2>
+                <h5 class="text-muted">
+                    {{ entry.practice_question_id }}
+                </h5>
+
+            {% else %}
+
+                <h2>New Dataset Entry</h2>
+                <h5 class="text-muted">
+                    Create a new question
+                </h5>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+    <form method="POST">
+
+
+{% if shared_fields_locked %}
+
+<div class="alert alert-info shadow-sm mb-4">
+
+    <h6 class="mb-2">
+        🔒 Shared Information
+    </h6>
+
+    <p class="mb-2">
+        Topic, Sub Topic, Scenario,
+        Scenario Explanation,
+        Memory Shortcut,
+        Applies When,
+        Not Applies When
+        (English & Malayalam)
+        are shared across all questions in this Sub Topic.
+    </p>
+
+    <a
+        href="{{ url_for(
+            'project.review_question',
+            project_id=project.id,
+            entry_id=shared_entry.id
+        ) }}"
+        class="btn btn-primary btn-sm">
+
+        ✏️ Go to Question 1
+
+    </a>
+
+</div>
+
+{% endif %}
+
+
+
+        <!-- TOPIC -->
+
+<div class="card mb-4 shadow-sm shared-section">
+    <div class="card-header bg-secondary text-white">
+        <strong>Topic</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="topic_en">
+                        💬
+                    </button>
+
+                </div>
+
+                <select
+                    class="form-select"
+                    id="topicSelect"
+                    name="topic_en">
+
+                    <option value="">-- Select Topic --</option>
+                    {% for topic in topics %}
+                    <option value="{{ topic }}"
+                    {% if entry and entry.topic_en == topic %}selected{% endif %}>
+                        {{ topic }}
+                    </option>
+                    {% endfor %}
+
+                    <option value="__NEW__">
+                        + Create New Topic
+                    </option>
+
+                </select>
+
+                <div id="newTopicBox" style="display:none;" class="mt-3">
+
+                    <input
+                        type="text"
+                        class="form-control mb-2"
+                        name="new_topic_name"
+                        placeholder="Enter New Topic">
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="topic_code"
+                        placeholder="Topic Code (HP, OV, PK...)">
+
+                </div>
+
+            </div>
+
+
+
+
+
+
+
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="topic_ml">
+
+                        💬
+
+                    </button>
+
+                </div>
+
+            <input
+                type="text"
+                class="form-control"
+                id="topicMl"
+                name="topic_ml"
+                value="{{ entry.topic_ml or '' }}">
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- SUB TOPIC -->
+
+<div class="card mb-4 shadow-sm shared-section">
+    <div class="card-header bg-secondary text-white">
+        <strong>Sub Topic</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="sub_topic_en">
+                        💬
+                    </button>
+
+                </div>
+
+                <select
+                    class="form-select"
+                    id="subTopicSelect"
+                    name="sub_topic_en">
+
+                    <option value="">-- Select Sub Topic --</option>
+
+                    {% for topic, subtopic in subtopics %}
+
+                    <option
+                        value="{{ subtopic }}"
+                        data-topic="{{ topic }}"
+                        {% if entry and entry.sub_topic_en == subtopic %}selected{% endif %}>
+
+                        {{ subtopic }}
+
+                    </option>
+
+                    {% endfor %}
+
+                    <option value="__NEW__">
+                        + Create New Sub Topic
+                    </option>
+
+                </select>
+
+                <div
+                    id="newSubTopicBox"
+                    class="mt-3"
+                    style="display:none;">
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="new_sub_topic"
+                        placeholder="Enter New Sub Topic">
+
+                </div>
+
+
+
+
+            </div>
+            
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="sub_topic_ml">
+
+                        💬
+
+                    </button>
+
+                </div>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="subTopicMl"
+                    name="sub_topic_ml"
+                    value="{{ entry.sub_topic_ml or '' }}">
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+{% if shared_fields_locked %}
+
+<div class="text-center mb-4">
+
+    <button
+        class="btn btn-outline-primary"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#sharedFields">
+
+        ▼ Show Shared Scenario Information
+
+    </button>
+
+</div>
+
+{% endif %}
+
+<div
+    id="sharedFields"
+    class="{% if shared_fields_locked %}collapse{% endif %}">
+
+<!-- ===================================================== -->
+<!-- SCENARIO -->
+<!-- ===================================================== -->
+
+<div class="card mb-4 shadow-sm shared-section">
+    <div class="card-header bg-primary text-white">
+        <strong>Scenario</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="scenario_en">
+                        💬
+                    </button>
+
+                </div>
+
+            {% if correction_map.get("scenario_en") %}
+            <div class="alert alert-warning mb-2">
+                <strong>📝 Reviewer Comment</strong><br>
+                {{ correction_map["scenario_en"] }}
+            </div>
+            {% endif %}
+
+            <textarea
+                class="form-control {% if correction_map.get('scenario_en') %}border border-warning border-3{% endif %}"
+                name="scenario_en"
+                rows="4">{{ entry.scenario_en }}</textarea>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="scenario_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("scenario_ml") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["scenario_ml"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    class="form-control {% if correction_map.get('scenario_ml') %}border border-warning border-3{% endif %}"
+                    name="scenario_ml"
+                    rows="4">{{ entry.scenario_ml }}</textarea>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- SCENARIO EXPLANATION -->
+<!-- ===================================================== -->
+
+<div class="card mb-4 shadow-sm shared-section">
+    <div class="card-header bg-info text-white">
+        <strong>Scenario Explanation</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="scenario_explanation_en">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("scenario_explanation_en") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["scenario_explanation_en"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    
+                    class="form-control {% if correction_map.get('scenario_explanation_en') %}border border-warning border-3{% endif %}"
+                    name="scenario_explanation_en"
+                    rows="4">{{ entry.scenario_explanation_en }}</textarea>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="scenario_explanation_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("scenario_explanation_ml") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["scenario_explanation_ml"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    
+                    class="form-control {% if correction_map.get('scenario_explanation_ml') %}border border-warning border-3{% endif %}"
+                    name="scenario_explanation_ml"
+                    rows="4">{{ entry.scenario_explanation_ml }}</textarea>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- MEMORY SHORTCUT -->
+<!-- ===================================================== -->
+
+<div class="card mb-4 shadow-sm shared-section">
+    <div class="card-header bg-warning">
+        <strong>Memory Shortcut</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="memory_shortcut_en">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("memory_shortcut_en") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["memory_shortcut_en"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    
+                    class="form-control {% if correction_map.get('memory_shortcut_en') %}border border-warning border-3{% endif %}"
+                    name="memory_shortcut_en"
+                    rows="4">{{ entry.memory_shortcut_en }}</textarea>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="memory_shortcut_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("memory_shortcut_ml") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["memory_shortcut_ml"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    
+                    class="form-control {% if correction_map.get('memory_shortcut_ml') %}border border-warning border-3{% endif %}"
+                    name="memory_shortcut_ml"
+                    rows="4">{{ entry.memory_shortcut_ml }}</textarea>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- APPLIES WHEN -->
+<!-- ===================================================== -->
+
+<div class="card mb-4 shadow-sm shared-section">
+    <div class="card-header bg-success text-white">
+        <strong>Applies When</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="applies_when_en">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("applies_when_en") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["applies_when_en"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    
+                    class="form-control {% if correction_map.get('applies_when_en') %}border border-warning border-3{% endif %}"
+                    name="applies_when_en"
+                    rows="4">{{ entry.applies_when_en }}</textarea>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="applies_when_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("applies_when_ml") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["applies_when_ml"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    
+                    class="form-control {% if correction_map.get('applies_when_ml') %}border border-warning border-3{% endif %}"
+                    name="applies_when_ml"
+                    rows="4">{{ entry.applies_when_ml }}</textarea>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- NOT APPLIES WHEN -->
+<!-- ===================================================== -->
+
+<div class="card mb-4 shadow-sm shared-section">
+    <div class="card-header bg-danger text-white">
+        <strong>Not Applies When</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="not_applies_when_en">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("not_applies_when_en") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["not_applies_when_en"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    
+                    class="form-control {% if correction_map.get('not_applies_when_en') %}border border-warning border-3{% endif %}"
+                    name="not_applies_when_en"
+                    rows="4">{{ entry.not_applies_when_en }}</textarea>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="not_applies_when_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("not_applies_when_ml") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["not_applies_when_ml"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    
+                    class="form-control {% if correction_map.get('not_applies_when_ml') %}border border-warning border-3{% endif %}"
+                    name="not_applies_when_ml"
+                    rows="4">{{ entry.not_applies_when_ml }}</textarea>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+</div>
+<!-- ===================================================== -->
+<!-- QUESTION -->
+<!-- ===================================================== -->
+
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <strong>Question</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="question_en">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("question_en") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["question_en"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    
+                    class="form-control {% if correction_map.get('question_en') %}border border-warning border-3{% endif %}"
+                    name="question_en"
+                    rows="4">{{ entry.question_en }}</textarea>
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="question_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("question_ml") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["question_ml"] }}
+                </div>
+                {% endif %}
+
+                <textarea
+                    class="form-control {% if correction_map.get('question_ml') %}border border-warning border-3{% endif %}"
+                    name="question_ml"
+                    rows="4">{{ entry.question_ml or "" }}</textarea>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- OPTION A -->
+
+<div class="card mb-3 shadow-sm">
+
+    <div class="card-header">
+        <strong>Option A</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="option_a_en">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("option_a_en") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["option_a_en"] }}
+                </div>
+                {% endif %}
+
+                <input
+                    type="text"
+                    class="form-control {% if correction_map.get('option_a_en') %}border border-warning border-3{% endif %}"
+                    name="option_a_en"
+                    value="{{ entry.option_a_en or '' }}">
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="fw-bold text-success mb-0">🇮🇳 Malayalam</label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="option_a_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                    {% if correction_map.get("option_a_ml") %}
+                    <div class="alert alert-warning mb-2">
+                        <strong>📝 Reviewer Comment</strong><br>
+                        {{ correction_map["option_a_ml"] }}
+                    </div>
+                    {% endif %}
+
+                    <input
+                        type="text"
+                        class="form-control {% if correction_map.get('option_a_ml') %}border border-warning border-3{% endif %}"
+                        name="option_a_ml"
+                        value="{{ entry.option_a_ml or '' }}">
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- OPTION B -->
+
+<div class="card mb-3 shadow-sm">
+
+    <div class="card-header">
+        <strong>Option B</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="option_b_en">
+                        💬
+                    </button>
+
+                </div>
+
+                    {% if correction_map.get("option_b_en") %}
+                    <div class="alert alert-warning mb-2">
+                        <strong>📝 Reviewer Comment</strong><br>
+                        {{ correction_map["option_b_en"] }}
+                    </div>
+                    {% endif %}
+
+                    <input
+                        type="text"
+                        class="form-control {% if correction_map.get('option_b_en') %}border border-warning border-3{% endif %}"
+                        name="option_b_en"
+                        value="{{ entry.option_b_en or '' }}">
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="fw-bold text-success mb-0">🇮🇳 Malayalam</label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="option_b_ml">
+                        💬
+                    </button>
+
+                </div>
+                    {% if correction_map.get("option_b_ml") %}
+                    <div class="alert alert-warning mb-2">
+                        <strong>📝 Reviewer Comment</strong><br>
+                        {{ correction_map["option_b_ml"] }}
+                    </div>
+                    {% endif %}
+
+                    <input
+                        type="text"
+                        class="form-control {% if correction_map.get('option_b_ml') %}border border-warning border-3{% endif %}"
+                        name="option_b_ml"
+                        value="{{ entry.option_b_ml or '' }}">
+
+            
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- OPTION C -->
+
+<div class="card mb-4 shadow-sm">
+
+    <div class="card-header">
+        <strong>Option C</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="option_c_en">
+                        💬
+                    </button>
+
+                </div>
+
+                    {% if correction_map.get("option_c_en") %}
+                    <div class="alert alert-warning mb-2">
+                        <strong>📝 Reviewer Comment</strong><br>
+                        {{ correction_map["option_c_en"] }}
+                    </div>
+                    {% endif %}
+
+                    <input
+                        type="text"
+                        class="form-control {% if correction_map.get('option_c_en') %}border border-warning border-3{% endif %}"
+                        name="option_c_en"
+                        value="{{ entry.option_c_en or '' }}">
+
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="fw-bold text-success mb-0">🇮🇳 Malayalam</label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="option_c_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                    {% if correction_map.get("option_c_ml") %}
+                    <div class="alert alert-warning mb-2">
+                        <strong>📝 Reviewer Comment</strong><br>
+                        {{ correction_map["option_c_ml"] }}
+                    </div>
+                    {% endif %}
+
+                    <input
+                        type="text"
+                        class="form-control {% if correction_map.get('option_c_ml') %}border border-warning border-3{% endif %}"
+                        name="option_c_ml"
+                        value="{{ entry.option_c_ml or '' }}">
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CORRECT ANSWER -->
+
+<div class="card mb-4 shadow-sm">
+
+    <div class="card-header bg-success text-white">
+        <strong>Correct Answer</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="correct_answer_en">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("correct_answer_en") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["correct_answer_en"] }}
+                </div>
+                {% endif %}
+
+                <input
+                    type="text"
+                    class="form-control {% if correction_map.get('correct_answer_en') %}border border-warning border-3{% endif %}"
+                    name="correct_answer_en"
+                    value="{{ entry.correct_answer_en }}">
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="fw-bold text-success mb-0">🇮🇳 Malayalam</label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="correct_answer_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                {% if correction_map.get("correct_answer_ml") %}
+                <div class="alert alert-warning mb-2">
+                    <strong>📝 Reviewer Comment</strong><br>
+                    {{ correction_map["correct_answer_ml"] }}
+                </div>
+                {% endif %}
+
+                <input
+                    type="text"
+                    class="form-control {% if correction_map.get('correct_answer_ml') %}border border-warning border-3{% endif %}"
+                    name="correct_answer_ml"
+                    value="{{ entry.correct_answer_ml }}">
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <div class="row">
+
+            <div class="col-md-3">
+
+                <label class="fw-bold">
+                    Correct Answer Letter
+                </label>
+
+                <select
+                    class="form-select"
+                    name="correct_answer_letter">
+
+                    <option value="A"
+                        {% if entry.correct_answer_letter == "A" %}selected{% endif %}>
+                        A
+                    </option>
+
+                    <option value="B"
+                        {% if entry.correct_answer_letter == "B" %}selected{% endif %}>
+                        B
+                    </option>
+
+                    <option value="C"
+                        {% if entry.correct_answer_letter == "C" %}selected{% endif %}>
+                        C
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- EXPLANATION -->
+
+<div class="card mb-4 shadow-sm">
+
+    <div class="card-header bg-info text-white">
+        <strong>Explanation</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="explanation_en">
+                        💬
+                    </button>
+
+                </div>
+
+                    {% if correction_map.get("explanation_en") %}
+                    <div class="alert alert-warning mb-2">
+                        <strong>📝 Reviewer Comment</strong><br>
+                        {{ correction_map["explanation_en"] }}
+                    </div>
+                    {% endif %}
+
+                    <textarea
+                        class="form-control {% if correction_map.get('explanation_en') %}border border-warning border-3{% endif %}"
+                        rows="5"
+                        name="explanation_en">{{ entry.explanation_en }}</textarea>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="explanation_ml">
+                        💬
+                    </button>
+
+                </div>
+                    {% if correction_map.get("explanation_ml") %}
+                    <div class="alert alert-warning mb-2">
+                        <strong>📝 Reviewer Comment</strong><br>
+                        {{ correction_map["explanation_ml"] }}
+                    </div>
+                    {% endif %}
+
+                    <textarea
+                        class="form-control {% if correction_map.get('explanation_ml') %}border border-warning border-3{% endif %}"
+                        rows="5"
+                        name="explanation_ml">{{ entry.explanation_ml }}</textarea>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- WRONG ANSWER TIP -->
+
+<div class="card mb-4 shadow-sm">
+
+    <div class="card-header bg-warning">
+        <strong>Wrong Answer Tip</strong>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-primary mb-0">
+                        🇬🇧 English
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="wrong_answer_tip_en">
+                        💬
+                    </button>
+
+                </div>
+
+
+                    {% if correction_map.get("wrong_answer_tip_en") %}
+                    <div class="alert alert-warning mb-2">
+                        <strong>📝 Reviewer Comment</strong><br>
+                        {{ correction_map["wrong_answer_tip_en"] }}
+                    </div>
+                    {% endif %}
+
+                    <textarea
+                        class="form-control {% if correction_map.get('wrong_answer_tip_en') %}border border-warning border-3{% endif %}"
+                        rows="5"
+                        name="wrong_answer_tip_en">{{ entry.wrong_answer_tip_en }}</textarea>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <label class="form-label fw-bold text-success mb-0">
+                        🇮🇳 Malayalam
+                    </label>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary correction-btn"
+                        data-entry="{{ entry.id }}"
+                        data-field="wrong_answer_tip_ml">
+                        💬
+                    </button>
+
+                </div>
+
+                    {% if correction_map.get("wrong_answer_tip_ml") %}
+                    <div class="alert alert-warning mb-2">
+                        <strong>📝 Reviewer Comment</strong><br>
+                        {{ correction_map["wrong_answer_tip_ml"] }}
+                    </div>
+                    {% endif %}
+
+                    <textarea
+                        class="form-control {% if correction_map.get('wrong_answer_tip_ml') %}border border-warning border-3{% endif %}"
+                        rows="5"
+                        name="wrong_answer_tip_ml">{{ entry.wrong_answer_tip_ml }}</textarea>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<hr class="my-4">
+
+
+
+
+<!-- ===================================================== -->
+<!-- QUESTION IMAGE REFERENCE -->
+<!-- ===================================================== -->
+
+<div class="card mb-4 shadow-sm">
+
+    <div class="card-header bg-secondary text-white">
+        <strong>Question Image Reference</strong>
+    </div>
+
+    <div class="card-body">
+
+        <input
+            type="text"
+            class="form-control"
+            name="question_image_ref"
+            value="{{ entry.question_image_ref or '' }}">
+
+    </div>
+
+</div>
+
+
+
+
+
+<!-- Sticky Footer -->
+<div class="sticky-footer">
+
+    {% if previous_entry %}
+    <a id="prevBtn"
+   href="{{ url_for('project.review_question',
+                 project_id=project.id,
+                 entry_id=previous_entry.id) }}"
+   class="btn btn-secondary">
+        ← Previous
+    </a>
+    {% else %}
+    <div></div>
+    {% endif %}
+
+
+
+
+
+
+
+{% if role == "REVIEWER" and entry %}
+
+    <button type="submit"
+            class="btn btn-success"
+            name="action"
+            value="save">
+        💾 Save Changes
+    </button>
+
+    {% if entry.status == entry.STATUS_SUBMITTED %}
+
+        <button type="submit"
+                class="btn btn-primary ms-2"
+                name="action"
+                value="approve">
+            ✅ Approve
+        </button>
+
+        <button type="submit"
+                class="btn btn-warning ms-2"
+                name="action"
+                value="corrections">
+            ✏️ Request Corrections
+        </button>
+
+    {% elif entry.status == entry.STATUS_APPROVED %}
+
+        <button class="btn btn-success ms-2" disabled>
+            ✔ Already Approved
+        </button>
+
+    {% elif entry.status == entry.STATUS_CORRECTIONS %}
+
+        <button class="btn btn-secondary ms-2" disabled>
+            ⏳ Waiting for Team Resubmission
+        </button>
+
+    {% elif entry.status == entry.STATUS_DRAFT %}
+
+        <button class="btn btn-secondary ms-2" disabled>
+            📝 Draft
+        </button>
+
+    {% endif %}
+
+{% endif %}
+
+
+
+
+
+
+
+    {% if next_entry %}
+    <a id="nextBtn"
+   href="{{ url_for('project.review_question',
+                 project_id=project.id,
+                 entry_id=next_entry.id) }}"
+   class="btn btn-primary">
+        Next →
+    </a>
+    {% else %}
+    <div></div>
+    {% endif %}
+
+</div>
+
+<div class="modal fade"
+     id="correctionModal"
+     tabindex="-1">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    Correction Comment
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <textarea
+                    id="correctionComment"
+                    class="form-control"
+                    rows="6"></textarea>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</form>
+
+</div>   <!-- editor-content -->
+
+</div>   <!-- container -->
+
+<script>
+
+setTimeout(function(){
+
+    const alerts = document.querySelectorAll(".flash-alert");
+
+    alerts.forEach(function(alert){
+
+        alert.classList.remove("show");
+
+        setTimeout(function(){
+
+            alert.remove();
+
+        },300);
+
+    });
+
+},2000);
+
+</script>
+<script>
+
+const editor = document.getElementById("editor-content");
+
+const nextBtn = document.getElementById("nextBtn");
+
+if(nextBtn){
+
+    nextBtn.addEventListener("click", function(e){
+
+        e.preventDefault();
+
+        editor.classList.add("slide-next");
+
+        setTimeout(() => {
+
+            window.location.href = this.href;
+
+        },180);
+
+    });
+
+}
+
+const prevBtn = document.getElementById("prevBtn");
+
+if(prevBtn){
+
+    prevBtn.addEventListener("click", function(e){
+
+        e.preventDefault();
+
+        editor.classList.add("slide-prev");
+
+        setTimeout(() => {
+
+            window.location.href = this.href;
+
+        },180);
+
+    });
+
+}
+
+</script>
+
+<script>
+
+document.getElementById("topicSelect").addEventListener("change", function(){
+
+    if(this.value=="__NEW__"){
+        document.getElementById("newTopicBox").style.display="block";
+    }
+    else{
+        document.getElementById("newTopicBox").style.display="none";
+    }
+
+});
+
+</script>
+
+<script>
+
+const topicSelect = document.getElementById("topicSelect");
+const subTopicSelect = document.getElementById("subTopicSelect");
+const newSubTopicBox = document.getElementById("newSubTopicBox");
+
+function filterSubTopics() {
+
+    const selectedTopic = topicSelect.value;
+
+    for (let option of subTopicSelect.options) {
+
+        if (
+            option.value == "" ||
+            option.value == "__NEW__"
+        ) {
+            option.hidden = false;
+            continue;
+        }
+
+        option.hidden =
+            option.dataset.topic !== selectedTopic;
+
+    }
+    newSubTopicBox.style.display = "none";
+}
+
+topicSelect.addEventListener(
+    "change",
+    filterSubTopics
+);
+
+subTopicSelect.addEventListener(
+    "change",
+    function () {
+
+        if (this.value == "__NEW__") {
+
+            newSubTopicBox.style.display = "block";
+
+        }
+        else {
+
+            newSubTopicBox.style.display = "none";
+
+        }
+
+    }
+);
+
+window.onload = filterSubTopics;
+
+</script>
+
+
+<script>
+
+const topicTranslations = {
+{% for en, ml in topic_translations %}
+    "{{ en|escape }}": "{{ (ml or '')|escape }}",
+{% endfor %}
+};
+
+const subTopicTranslations = {
+{% for en, ml in subtopic_translations %}
+    "{{ en|escape }}": "{{ (ml or '')|escape }}",
+{% endfor %}
+};
+
+const topicMl = document.getElementById("topicMl");
+const subTopicMl = document.getElementById("subTopicMl");
+
+topicSelect.addEventListener("change", function () {
+
+    if (topicTranslations[this.value]) {
+        topicMl.value = topicTranslations[this.value];
+    } else {
+        topicMl.value = "";
+    }
+
+});
+
+subTopicSelect.addEventListener("change", function () {
+
+    if (subTopicTranslations[this.value]) {
+        subTopicMl.value = subTopicTranslations[this.value];
+    } else {
+        subTopicMl.value = "";
+    }
+
+});
+
+</script>
+
+
+<script>
+    window.savedRichContent = {{ (entry.rich_content or {}) | tojson }};
+</script>
+
+<script src="{{ url_for('static', filename='js/editor.js') }}"></script>
+{% endblock %}      {# closes content #}
+
+{% block scripts %}
+
+<script>
+const correctionModal = new bootstrap.Modal(
+    document.getElementById("correctionModal")
+);
+
+const commentBox = document.getElementById("correctionComment");
+
+
+// Highlight buttons that already have correction comments
+const corrections = {{ correction_map | tojson }};
+
+document.querySelectorAll(".correction-btn").forEach(button => {
+
+    const field = button.dataset.field;
+
+    if (corrections[field]) {
+
+        // Make button orange
+        button.classList.remove("btn-outline-secondary");
+        button.classList.add("btn-warning");
+
+        // Wrap button once so we can position the dot
+        if (!button.parentElement.classList.contains("position-relative")) {
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "position-relative d-inline-block";
+
+            button.parentNode.insertBefore(wrapper, button);
+            wrapper.appendChild(button);
+        }
+
+        // Add notification dot only once
+        if (!button.parentElement.querySelector(".comment-dot")) {
+
+            const dot = document.createElement("span");
+            dot.className = "comment-dot";
+
+            button.parentElement.appendChild(dot);
+        }
+    }
+
+});
+
+document.querySelectorAll(".correction-btn").forEach(button => {
+
+    button.addEventListener("click", async function () {
+
+        const entryId = this.dataset.entry;
+        const field = this.dataset.field;
+
+        const response = await fetch(`/correction/${entryId}`);
+
+        const data = await response.json();
+
+        commentBox.value = data[field] || "";
+
+        document.querySelectorAll(".correction-btn").forEach(btn =>
+            btn.classList.remove("active")
+        );
+
+        this.classList.add("active");
+
+        correctionModal.show();
+
+    });
+
+});
+
+
+const modalElement = document.getElementById("correctionModal");
+
+modalElement.addEventListener("hidden.bs.modal", async function () {
+
+    const activeButton = document.querySelector(".correction-btn.active");
+
+    if (!activeButton) return;
+
+    await fetch("/correction/save", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            entry_id: activeButton.dataset.entry,
+            field_name: activeButton.dataset.field,
+            comment: commentBox.value
+        })
+    });
+
+});
+</script>
+
+<script>
+
+{% if shared_fields_locked %}
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    // Make shared text fields read-only
+    document.querySelectorAll(
+        ".shared-section textarea, .shared-section input"
+    ).forEach(function(field){
+
+        field.readOnly = true;
+
+    });
+
+    // Disable shared dropdowns
+    document.querySelectorAll(
+        ".shared-section select"
+    ).forEach(function(field){
+
+        field.disabled = true;
+
+    });
+
+    // Disable correction buttons in shared sections
+    document.querySelectorAll(
+        ".shared-section button.correction-btn"
+    ).forEach(function(btn){
+
+        btn.disabled = true;
+
+    });
+
+    const sharedFields =
+    document.getElementById("sharedFields");
+
+const toggleButton =
+    document.querySelector(
+        '[data-bs-target="#sharedFields"]'
+    );
+
+if(sharedFields && toggleButton){
+
+    sharedFields.addEventListener(
+        "shown.bs.collapse",
+        function(){
+
+            toggleButton.innerHTML =
+                "▲ Hide Shared Scenario Information";
+
+        }
+    );
+
+    sharedFields.addEventListener(
+        "hidden.bs.collapse",
+        function(){
+
+            toggleButton.innerHTML =
+                "▼ Show Shared Scenario Information";
+
+        }
+    );
+
+}
+
+});
+
+{% endif %}
+
+</script>
+{% endblock %}
+

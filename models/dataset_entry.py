@@ -1,9 +1,15 @@
 from models import db
+from datetime import datetime
 
 
 class DatasetEntry(db.Model):
 
     __tablename__ = "dataset_entries"
+    
+    STATUS_DRAFT = "Draft"
+    STATUS_SUBMITTED = "Submitted for Review"
+    STATUS_CORRECTIONS = "Corrections Requested"
+    STATUS_APPROVED = "Approved"
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -113,6 +119,12 @@ class DatasetEntry(db.Model):
         db.Text
     )
 
+    question_en_rich = db.Column(db.Text, nullable=True)
+    question_ml_rich = db.Column(db.Text, nullable=True)
+    
+    rich_content = db.Column(db.JSON, nullable=True)
+
+
     option_a_ml = db.Column(
         db.Text
     )
@@ -142,7 +154,13 @@ class DatasetEntry(db.Model):
     default=False,
     nullable=False
     )
-
+    
+    
+    status = db.Column(
+        db.String(30),
+        nullable=False,
+        default=STATUS_DRAFT
+    )
     malayalam_completed = db.Column(
         db.Boolean,
         default=False,
@@ -160,3 +178,32 @@ class DatasetEntry(db.Model):
     )
     
     attempted = db.Column(db.Boolean, default=False)
+    
+    created_at = db.Column(
+    db.DateTime,
+    default=datetime.utcnow,
+    nullable=False
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    submitted_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    approved_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+        
+    def get_rich(self, field_name):
+        if self.rich_content and field_name in self.rich_content:
+            return self.rich_content[field_name]
+
+        return getattr(self, field_name, "") or ""

@@ -26,6 +26,8 @@ with app.app_context():
     from models.user import User
     from models.project import Project
     from models.dataset_entry import DatasetEntry
+    from models.field_correction import FieldCorrection
+
     db.create_all()
 
 
