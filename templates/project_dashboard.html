@@ -369,10 +369,9 @@
 
 </div>
 
-
-<!-- =====================================================
-     EXPORT MODAL
-===================================================== -->
+<!-- =========================================
+     EXPORT DATASET MODAL
+========================================= -->
 
 <div class="modal fade"
      id="exportModal"
@@ -382,86 +381,204 @@
 
     <div class="modal-dialog modal-dialog-centered">
 
-        <div class="modal-content export-modal">
+        <div class="modal-content">
 
             <div class="modal-header">
 
-                <div>
-                    <h5 class="modal-title"
-                        id="exportModalLabel">
-                        Export Dataset
-                    </h5>
-
-                    <small class="text-muted">
-                        Choose which dataset you want to export.
-                    </small>
-                </div>
+                <h5 class="modal-title" id="exportModalLabel">
+                    📤 Export Dataset
+                </h5>
 
                 <button type="button"
                         class="btn-close"
-                        data-bs-dismiss="modal">
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
                 </button>
 
             </div>
 
-
             <div class="modal-body">
 
-                <div class="export-options">
+                <!-- Export Type -->
+                <div class="mb-4">
 
+                    <label class="form-label fw-bold">
+                        Export Type
+                    </label>
 
-                    <!-- English -->
+                    <div class="form-check">
 
-                    <a href="{{ url_for('project.export_dataset',
-                                        project_id=project.id,
-                                        language='english') }}"
-                    class="export-option">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="exportMode"
+                               id="exportFinal"
+                               value="final"
+                               checked>
 
-                        <div class="export-option-icon">
-                            EN
+                        <label class="form-check-label"
+                               for="exportFinal">
+                            Final Dataset
+                        </label>
+
+                        <div class="text-muted small">
+                            Exports approved entries only.
                         </div>
 
-                        <div>
-                            <strong>English Dataset</strong>
+                    </div>
 
-                            <small>
-                                Export English dataset records
-                            </small>
+                    <div class="form-check mt-2">
+
+                        <input class="form-check-input"
+                               type="radio"
+                               name="exportMode"
+                               id="exportCustom"
+                               value="custom">
+
+                        <label class="form-check-label"
+                               for="exportCustom">
+                            Custom Export
+                        </label>
+
+                        <div class="text-muted small">
+                            Choose which workflow statuses to export.
                         </div>
 
-                        <span class="export-arrow">
-                            →
-                        </span>
-
-                    </a>
-
-
-                    <!-- Malayalam -->
-
-                    <a href="{{ url_for('project.export_dataset',
-                                        project_id=project.id,
-                                        language='malayalam') }}"
-                    class="export-option">
-
-                        <div class="export-option-icon">
-                            ML
-                        </div>
-
-                        <div>
-                            <strong>Malayalam Dataset</strong>
-
-                            <small>
-                                Export Malayalam translations
-                            </small>
-                        </div>
-
-                        <span class="export-arrow">
-                            →
-                        </span>
-
-                    </a>
+                    </div>
 
                 </div>
+
+                <!-- Language -->
+                <div class="mb-4">
+
+                    <label class="form-label fw-bold">
+                        Language
+                    </label>
+
+                    <div>
+
+                        <div class="form-check form-check-inline">
+
+                            <input class="form-check-input"
+                                   type="radio"
+                                   name="exportLanguage"
+                                   id="exportEnglish"
+                                   value="english"
+                                   checked>
+
+                            <label class="form-check-label"
+                                   for="exportEnglish">
+                                English
+                            </label>
+
+                        </div>
+
+                        <div class="form-check form-check-inline">
+
+                            <input class="form-check-input"
+                                   type="radio"
+                                   name="exportLanguage"
+                                   id="exportMalayalam"
+                                   value="malayalam">
+
+                            <label class="form-check-label"
+                                   for="exportMalayalam">
+                                Malayalam
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Custom Status Selection -->
+                <div id="customStatusSection"
+                     class="border rounded p-3"
+                     style="display:none;">
+
+                    <label class="form-label fw-bold">
+                        Include Status
+                    </label>
+
+                    <div class="form-check">
+
+                        <input class="form-check-input export-status"
+                               type="checkbox"
+                               value="Draft"
+                               id="statusDraft">
+
+                        <label class="form-check-label"
+                               for="statusDraft">
+                            Draft
+                        </label>
+
+                    </div>
+
+                    <div class="form-check">
+
+                        <input class="form-check-input export-status"
+                               type="checkbox"
+                               value="Submitted for Review"
+                               id="statusSubmitted">
+
+                        <label class="form-check-label"
+                               for="statusSubmitted">
+                            Submitted for Review
+                        </label>
+
+                    </div>
+
+                    <div class="form-check">
+
+                        <input class="form-check-input export-status"
+                               type="checkbox"
+                               value="Corrections Requested"
+                               id="statusCorrections">
+
+                        <label class="form-check-label"
+                               for="statusCorrections">
+                            Corrections Requested
+                        </label>
+
+                    </div>
+
+                    <div class="form-check">
+
+                        <input class="form-check-input export-status"
+                               type="checkbox"
+                               value="Approved"
+                               id="statusApproved">
+
+                        <label class="form-check-label"
+                               for="statusApproved">
+                            Approved
+                        </label>
+
+                    </div>
+
+                    <div id="exportStatusError"
+                         class="text-danger small mt-2"
+                         style="display:none;">
+                        Please select at least one status.
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        id="confirmExportBtn">
+                    📤 Export Dataset
+                </button>
 
             </div>
 
@@ -470,6 +587,101 @@
     </div>
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const finalRadio = document.getElementById("exportFinal");
+    const customRadio = document.getElementById("exportCustom");
+    const customStatusSection =
+        document.getElementById("customStatusSection");
+
+    const exportButton =
+        document.getElementById("confirmExportBtn");
+
+    const statusError =
+        document.getElementById("exportStatusError");
+
+
+    function updateExportMode() {
+
+        if (customRadio.checked) {
+
+            customStatusSection.style.display = "block";
+
+        } else {
+
+            customStatusSection.style.display = "none";
+            statusError.style.display = "none";
+
+        }
+    }
+
+
+    finalRadio.addEventListener("change", updateExportMode);
+    customRadio.addEventListener("change", updateExportMode);
+
+
+    exportButton.addEventListener("click", function () {
+
+        const mode = document.querySelector(
+            'input[name="exportMode"]:checked'
+        ).value;
+
+        const language = document.querySelector(
+            'input[name="exportLanguage"]:checked'
+        ).value;
+
+
+        let url =
+            "{{ url_for('project.export_dataset', project_id=project.id, language='LANGUAGE') }}";
+
+        url = url.replace("LANGUAGE", language);
+
+
+        const params = new URLSearchParams();
+
+        params.append("mode", mode);
+
+
+        if (mode === "custom") {
+
+            const selectedStatuses =
+                document.querySelectorAll(
+                    ".export-status:checked"
+                );
+
+            if (selectedStatuses.length === 0) {
+
+                statusError.style.display = "block";
+                return;
+
+            }
+
+            statusError.style.display = "none";
+
+
+            selectedStatuses.forEach(function (checkbox) {
+
+                params.append(
+                    "status",
+                    checkbox.value
+                );
+
+            });
+        }
+
+
+        window.location.href =
+            url + "?" + params.toString();
+
+    });
+
+
+    updateExportMode();
+
+});
+</script>
 
 {% endblock %}
 
