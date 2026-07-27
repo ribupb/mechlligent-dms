@@ -403,6 +403,19 @@
 
             </button>
 
+
+            <a href="{{ url_for('project.import_dataset',
+                                project_id=project.id) }}"
+            class="action-card">
+
+                <div class="small-action-icon">
+                    📥
+                </div>
+
+                <span>Import Dataset</span>
+
+            </a>
+
         </div>
 
     </div>

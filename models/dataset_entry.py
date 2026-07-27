@@ -179,6 +179,12 @@ class DatasetEntry(db.Model):
     
     attempted = db.Column(db.Boolean, default=False)
     
+    is_new = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False
+    )
+    
     created_at = db.Column(
     db.DateTime,
     default=datetime.utcnow,

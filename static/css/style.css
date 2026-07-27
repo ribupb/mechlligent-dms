@@ -281,7 +281,7 @@ body{
 
     background:linear-gradient(135deg,#0d6efd,#2563eb);
 
-    height:62px;
+    height:64px;
 
     padding:0;
 
@@ -625,7 +625,7 @@ body{
 }
 
 .navbar-logo {
-    width: 165px;
+    width: 169px;
     height: auto;
     display: block;
 }

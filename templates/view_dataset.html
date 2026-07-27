@@ -255,13 +255,13 @@
     </td>
 
     <td>
-
         <span class="fw-semibold">
-
             {{ row.practice_question_id }}
-
         </span>
 
+        {% if row.is_new %}
+            <span class="new-entry-badge">NEW</span>
+        {% endif %}
     </td>
 
     <td>

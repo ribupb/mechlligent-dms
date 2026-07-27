@@ -1445,6 +1445,9 @@ def import_dataset(project_id):
 
 
             if existing_entry:
+                
+                    # Track whether this import added any new information
+                data_added = False
 
         # ======================================
         # SAFE MERGE
@@ -1465,17 +1468,23 @@ def import_dataset(project_id):
 
                 print("=================================\n")
 
-                if not existing_entry.topic_id and current_topic_id:
-                    existing_entry.topic_id = current_topic_id
+
+                # ======================================
+                # SAFE MERGE - ENGLISH
+                # Track if ANY new data was added
+                # ======================================
 
                 if not existing_entry.topic_en and current_topic:
                     existing_entry.topic_en = current_topic
+                    data_added = True
 
                 if not existing_entry.sub_topic_en and current_sub_topic:
                     existing_entry.sub_topic_en = current_sub_topic
+                    data_added = True
 
                 if not existing_entry.scenario_en and current_scenario:
                     existing_entry.scenario_en = current_scenario
+                    data_added = True
 
                 if (
                     not existing_entry.scenario_explanation_en
@@ -1484,6 +1493,7 @@ def import_dataset(project_id):
                     existing_entry.scenario_explanation_en = (
                         current_scenario_explanation
                     )
+                    data_added = True
 
                 if (
                     not existing_entry.memory_shortcut_en
@@ -1492,12 +1502,14 @@ def import_dataset(project_id):
                     existing_entry.memory_shortcut_en = (
                         current_memory_shortcut
                     )
+                    data_added = True
 
                 if (
                     not existing_entry.applies_when_en
                     and current_applies_when
                 ):
                     existing_entry.applies_when_en = current_applies_when
+                    data_added = True
 
                 if (
                     not existing_entry.not_applies_when_en
@@ -1506,30 +1518,35 @@ def import_dataset(project_id):
                     existing_entry.not_applies_when_en = (
                         current_not_applies_when
                     )
+                    data_added = True
 
                 if (
                     not existing_entry.question_en
                     and row_data.get("Questions")
                 ):
                     existing_entry.question_en = row_data["Questions"]
+                    data_added = True
 
                 if (
                     not existing_entry.option_a_en
                     and row_data.get("Option_A")
                 ):
                     existing_entry.option_a_en = row_data["Option_A"]
+                    data_added = True
 
                 if (
                     not existing_entry.option_b_en
                     and row_data.get("Option_B")
                 ):
                     existing_entry.option_b_en = row_data["Option_B"]
+                    data_added = True
 
                 if (
                     not existing_entry.option_c_en
                     and row_data.get("Option_C")
                 ):
                     existing_entry.option_c_en = row_data["Option_C"]
+                    data_added = True
 
                 if (
                     not existing_entry.correct_answer_letter
@@ -1538,6 +1555,7 @@ def import_dataset(project_id):
                     existing_entry.correct_answer_letter = (
                         row_data["Correct_answer_letter"]
                     )
+                    data_added = True
 
                 if (
                     not existing_entry.correct_answer_en
@@ -1546,6 +1564,7 @@ def import_dataset(project_id):
                     existing_entry.correct_answer_en = (
                         row_data["Correct_answer"]
                     )
+                    data_added = True
 
                 if (
                     not existing_entry.explanation_en
@@ -1554,6 +1573,7 @@ def import_dataset(project_id):
                     existing_entry.explanation_en = (
                         row_data["Explanation"]
                     )
+                    data_added = True
 
                 if (
                     not existing_entry.wrong_answer_tip_en
@@ -1562,14 +1582,8 @@ def import_dataset(project_id):
                     existing_entry.wrong_answer_tip_en = (
                         row_data["Wrong_Answer_Tip"]
                     )
+                    data_added = True
 
-                if (
-                    not existing_entry.question_image_ref
-                    and row_data.get("Question_image_ref")
-                ):
-                    existing_entry.question_image_ref = (
-                        row_data["Question_image_ref"]
-                    )
                     
                     
                 # ======================================
@@ -1579,14 +1593,19 @@ def import_dataset(project_id):
 
                 if ml_data:
 
+
                     if not existing_entry.topic_ml and ml_data.get("topic_ml"):
                         existing_entry.topic_ml = ml_data["topic_ml"]
+                        data_added = True
 
                     if not existing_entry.sub_topic_ml and ml_data.get("sub_topic_ml"):
                         existing_entry.sub_topic_ml = ml_data["sub_topic_ml"]
+                        data_added = True
 
                     if not existing_entry.scenario_ml and ml_data.get("scenario_ml"):
                         existing_entry.scenario_ml = ml_data["scenario_ml"]
+                        data_added = True
+                        
 
                     if (
                         not existing_entry.scenario_explanation_ml
@@ -1595,6 +1614,7 @@ def import_dataset(project_id):
                         existing_entry.scenario_explanation_ml = (
                             ml_data["scenario_explanation_ml"]
                         )
+                        data_added = True
 
                     if (
                         not existing_entry.memory_shortcut_ml
@@ -1603,6 +1623,7 @@ def import_dataset(project_id):
                         existing_entry.memory_shortcut_ml = (
                             ml_data["memory_shortcut_ml"]
                         )
+                        data_added = True
 
                     if (
                         not existing_entry.applies_when_ml
@@ -1611,6 +1632,7 @@ def import_dataset(project_id):
                         existing_entry.applies_when_ml = (
                             ml_data["applies_when_ml"]
                         )
+                        data_added = True
 
                     if (
                         not existing_entry.not_applies_when_ml
@@ -1619,6 +1641,7 @@ def import_dataset(project_id):
                         existing_entry.not_applies_when_ml = (
                             ml_data["not_applies_when_ml"]
                         )
+                        data_added = True
 
                     if (
                         not existing_entry.question_ml
@@ -1627,6 +1650,8 @@ def import_dataset(project_id):
                         existing_entry.question_ml = (
                             ml_data["question_ml"]
                         )
+                        data_added = True
+                        
 
                     if (
                         not existing_entry.option_a_ml
@@ -1635,6 +1660,7 @@ def import_dataset(project_id):
                         existing_entry.option_a_ml = (
                             ml_data["option_a_ml"]
                         )
+                        data_added = True
 
                     if (
                         not existing_entry.option_b_ml
@@ -1643,6 +1669,7 @@ def import_dataset(project_id):
                         existing_entry.option_b_ml = (
                             ml_data["option_b_ml"]
                         )
+                        data_added = True
 
                     if (
                         not existing_entry.option_c_ml
@@ -1651,6 +1678,7 @@ def import_dataset(project_id):
                         existing_entry.option_c_ml = (
                             ml_data["option_c_ml"]
                         )
+                        data_added = True
 
                     if (
                         not existing_entry.correct_answer_ml
@@ -1659,6 +1687,7 @@ def import_dataset(project_id):
                         existing_entry.correct_answer_ml = (
                             ml_data["correct_answer_ml"]
                         )
+                        data_added = True
 
                     if (
                         not existing_entry.explanation_ml
@@ -1667,6 +1696,7 @@ def import_dataset(project_id):
                         existing_entry.explanation_ml = (
                             ml_data["explanation_ml"]
                         )
+                        data_added = True
 
                     if (
                         not existing_entry.wrong_answer_tip_ml
@@ -1675,6 +1705,12 @@ def import_dataset(project_id):
                         existing_entry.wrong_answer_tip_ml = (
                             ml_data["wrong_answer_tip_ml"]
                         )
+                        data_added = True
+                        
+                        
+                    # Mark existing entry as NEW if merge filled any missing field
+                if data_added:
+                    existing_entry.is_new = True
                     
                 print("\nAFTER SAFE MERGE:")
                 print("ID:", existing_entry.practice_question_id)
@@ -1688,7 +1724,21 @@ def import_dataset(project_id):
 
             else:
 
+                # Only rows newly introduced through MERGE
+                # should receive the NEW badge.
+                if existing_action == "merge":
+                    entry.is_new = True
+                else:
+                    entry.is_new = False
+
                 db.session.add(entry)
+
+                print(
+                    "Added:",
+                    entry.practice_question_id,
+                    "| NEW:",
+                    entry.is_new
+                )
 
                 print(
                     "Added:",

@@ -486,3 +486,28 @@ body {
     font-size: 0.82rem;
     color: #6b7280;
 }
+
+
+/* =========================
+   NEW ENTRY BADGE
+========================= */
+
+.new-entry-badge {
+    display: inline-flex;
+    align-items: center;
+
+    margin-left: 7px;
+    padding: 3px 7px;
+
+    background: #e8f7ee;
+    color: #198754;
+
+    border: 1px solid #b7e4c7;
+    border-radius: 6px;
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .4px;
+
+    vertical-align: middle;
+}

@@ -2,82 +2,203 @@
 
 {% block content %}
 
-<div class="container vh-100 d-flex justify-content-center align-items-center">
+<div class="login-page">
 
-    <div class="card shadow-lg p-4" style="width:420px; border-radius:15px;">
+    <!-- Decorative background -->
+    <div class="login-glow login-glow-one"></div>
+    <div class="login-glow login-glow-two"></div>
 
-        <div class="text-center mb-4">
+    <div class="login-wrapper">
 
-            <h2 class="fw-bold text-primary">
-                MECHLLIGENT
-            </h2>
+        <!-- Logo -->
+        <div class="login-logo-section">
+            <img
+                src="{{ url_for('static', filename='images/mechlligent-logo.png') }}"
+                alt="Mechlligent"
+                class="login-logo"
+            >
+        </div>
 
-            <h5 class="text-muted">
-                Dataset Management System
-            </h5>
+        <!-- Login Card -->
+        <div class="login-card">
+
+            <div class="login-header">
+
+                <h2>Welcome Back</h2>
+
+                <p>
+                    Sign in to access the Dataset Management System
+                </p>
+
+            </div>
+
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+
+                {% if messages %}
+
+                    <div class="login-alerts">
+
+                        {% for category, message in messages %}
+
+                            <div class="alert alert-{{ category }} login-alert">
+                                {{ message }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+            {% endwith %}
+
+
+            <!-- Login Form -->
+            <form method="POST" class="login-form" id="loginForm">
+
+                <!-- Username -->
+                <div class="login-field">
+
+                    <label for="username">
+                        Username
+                    </label>
+
+                    <div class="login-input-wrapper">
+
+                        <span class="login-input-icon">
+                            ♙
+                        </span>
+
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            class="form-control login-input"
+                            placeholder="Enter your username"
+                            autocomplete="username"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- Password -->
+                <div class="login-field">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <div class="login-input-wrapper">
+
+                        <span class="login-input-icon">
+                            ◇
+                        </span>
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-control login-input"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- Remember Me -->
+                <div class="login-options">
+
+                    <div class="form-check">
+
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="remember"
+                            name="remember"
+                        >
+
+                        <label
+                            class="form-check-label"
+                            for="remember"
+                        >
+                            Remember Me
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Login Button -->
+                <!-- Login Button -->
+                <button
+                    type="submit"
+                    class="btn login-button"
+                    id="loginButton"
+                >
+
+                    <span>Login</span>
+
+                    <span class="login-arrow">
+                        →
+                    </span>
+
+                </button>
+
+            </form>
+
+
+            <!-- Footer -->
+            <div class="login-footer">
+
+                <span class="login-status-dot"></span>
+
+                <span>
+                    Mechlligent Dataset Management System
+                </span>
+
+            </div>
 
         </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST">
-
-            <div class="mb-3">
-
-                <label>Username</label>
-
-                <input
-                    type="text"
-                    name="username"
-                    class="form-control"
-                    placeholder="Enter username"
-                    required>
-
-            </div>
-
-            <div class="mb-3">
-
-                <label>Password</label>
-
-                <input
-                    type="password"
-                    name="password"
-                    class="form-control"
-                    placeholder="Enter password"
-                    required>
-
-            </div>
-            <div class="form-check mb-3">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="remember"
-                    name="remember">
-
-                <label class="form-check-label" for="remember">
-                    Remember Me
-                </label>
-            </div>
-
-            <button
-                type="submit"
-                class="btn btn-primary w-100">
-
-                Login
-
-            </button>
-
-        </form>
     </div>
 
 </div>
+
+    </div>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const loginForm = document.getElementById("loginForm");
+    const loginButton = document.getElementById("loginButton");
+
+    loginForm.addEventListener("submit", function () {
+
+        loginButton.disabled = true;
+
+        loginButton.innerHTML = `
+            <span class="login-loading">
+                <span class="login-spinner"></span>
+                <span>Logging in...</span>
+            </span>
+        `;
+
+    });
+
+});
+</script>
 
 {% endblock %}
