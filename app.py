@@ -16,6 +16,13 @@ app.config.from_object(Config)
 
 db.init_app(app)
 
+@app.teardown_request
+def cleanup_db_session(exception=None):
+    if exception:
+        db.session.rollback()
+
+    db.session.remove()
+
 app.register_blueprint(auth)
 app.register_blueprint(workspace)
 app.register_blueprint(dashboard)

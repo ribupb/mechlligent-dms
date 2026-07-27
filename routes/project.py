@@ -396,30 +396,103 @@ def edit_question(entry_id):
 
         entry.rich_content = rich_content
         
-        db.session.commit()
-        
-        flash(f"Current Status: {entry.status}", "info")
+        try:
+            db.session.commit()
 
+        except Exception as e:
+
+            # Reset the failed SQLAlchemy transaction
+            db.session.rollback()
+
+            # Keep the actual error in the server logs
+            print(
+                f"QUESTION SAVE FAILED | "
+                f"Entry ID: {entry.id} | "
+                f"Error: {repr(e)}"
+            )
+
+            flash(
+                "The question could not be saved due to a temporary "
+                "server or database issue. Please try again.",
+                "danger"
+            )
+
+            return redirect(
+                url_for(
+                    "project.edit_question",
+                    entry_id=entry.id
+                )
+            )
+
+
+        flash(f"Current Status: {entry.status}", "info")
         flash("Question updated successfully!", "success")
 
         return redirect(
             url_for(
                 "project.edit_question",
-                entry_id=entry.id
+                entry_id=entry.id,
+                saved=1
             )
         )
-    project = Project.query.get(entry.project_id)        
-        
-    previous_entry = DatasetEntry.query.filter(
-        DatasetEntry.project_id == entry.project_id,
-        DatasetEntry.id < entry.id
-    ).order_by(DatasetEntry.id.desc()).first()
+    project = Project.query.get(entry.project_id)
 
-    next_entry = DatasetEntry.query.filter(
-        DatasetEntry.project_id == entry.project_id,
-        DatasetEntry.attempted == False,
-        DatasetEntry.id > entry.id
-    ).order_by(DatasetEntry.id.asc()).first()
+    # -------------------------------------------------
+    # Previous / Next navigation
+    # Keep navigation inside the workflow queue
+    # the user came from.
+    # -------------------------------------------------
+
+    from_status = request.args.get("from_status")
+
+    status_map = {
+        "Draft": DatasetEntry.STATUS_DRAFT,
+        "Pending Review": DatasetEntry.STATUS_SUBMITTED,
+        "Corrections Requested": DatasetEntry.STATUS_CORRECTIONS,
+        "Approved": DatasetEntry.STATUS_APPROVED,
+    }
+
+    queue_status = status_map.get(from_status)
+
+
+    if queue_status:
+
+        # User entered this page from one of the
+        # Dashboard workflow queues.
+        previous_entry = DatasetEntry.query.filter(
+            DatasetEntry.project_id == entry.project_id,
+            DatasetEntry.status == queue_status,
+            DatasetEntry.id < entry.id
+        ).order_by(
+            DatasetEntry.id.desc()
+        ).first()
+
+        next_entry = DatasetEntry.query.filter(
+            DatasetEntry.project_id == entry.project_id,
+            DatasetEntry.status == queue_status,
+            DatasetEntry.id > entry.id
+        ).order_by(
+            DatasetEntry.id.asc()
+        ).first()
+
+    else:
+
+        # Normal editing behaviour when the page
+        # was NOT opened from a workflow queue.
+        previous_entry = DatasetEntry.query.filter(
+            DatasetEntry.project_id == entry.project_id,
+            DatasetEntry.id < entry.id
+        ).order_by(
+            DatasetEntry.id.desc()
+        ).first()
+
+        next_entry = DatasetEntry.query.filter(
+            DatasetEntry.project_id == entry.project_id,
+            DatasetEntry.attempted == False,
+            DatasetEntry.id > entry.id
+        ).order_by(
+            DatasetEntry.id.asc()
+        ).first()
 
     topics = (
     db.session.query(DatasetEntry.topic_en)
@@ -2235,10 +2308,6 @@ def new_entry(project_id):
 
         entry.attempted = True
         
-        entry.english_completed = "english_completed" in request.form
-        entry.malayalam_completed = "malayalam_completed" in request.form
-
-        entry.attempted = True
         
         
         last_entry = DatasetEntry.query.filter_by(project_id=project.id) \
@@ -2276,15 +2345,41 @@ def new_entry(project_id):
         entry.practice_question_id = f"{entry.topic_id}_Q1"
 
         db.session.add(entry)
-        db.session.commit()
+
+        try:
+            db.session.commit()
+
+        except Exception as e:
+
+            db.session.rollback()
+
+            print(
+                f"NEW ENTRY SAVE FAILED | "
+                f"Project ID: {project.id} | "
+                f"Error: {repr(e)}"
+            )
+
+            flash(
+                "The new entry could not be saved due to a temporary "
+                "server or database issue. Please try again.",
+                "danger"
+            )
+
+            return redirect(
+                url_for(
+                    "project.new_entry",
+                    project_id=project.id
+                )
+            )
 
         flash("New dataset entry created successfully!", "success")
-        
 
         return redirect(
             url_for(
                 "project.edit_question",
-                entry_id=entry.id
+                entry_id=entry.id,
+                saved=1,
+                clear_new_draft=project.id
             )
         )
         
@@ -2359,6 +2454,8 @@ def new_entry(project_id):
                 "not_applies_when_en": e.not_applies_when_en,
                 "not_applies_when_ml": e.not_applies_when_ml
             }
+            
+            
     
     return render_template(
         "edit_question.html",
@@ -2451,12 +2548,23 @@ def save_field_correction():
 
         db.session.add(correction)
 
-    db.session.commit()
+        try:
+            db.session.commit()
 
-    return jsonify({
-        "success": True
-    })
-    
+        except Exception as e:
+            db.session.rollback()
+
+            print("ERROR saving field correction:", e)
+
+            return jsonify({
+                "success": False,
+                "message": "Could not save correction. Please try again."
+            }), 500
+
+
+        return jsonify({
+            "success": True
+        })
     
     
 @project.route("/correction/<int:entry_id>")
@@ -2495,6 +2603,21 @@ def review_question(project_id, entry_id):
 
         action = request.form.get("action")
         
+        if entry.status != DatasetEntry.STATUS_SUBMITTED:
+
+            flash(
+                "This question is not currently available for review.",
+                "warning"
+            )
+
+            return redirect(
+                url_for(
+                    "project.review_question",
+                    project_id=project.id,
+                    entry_id=entry.id
+                )
+            )
+                
         
         
         # Shared Fields
@@ -2605,11 +2728,79 @@ def review_question(project_id, entry_id):
 
         entry.rich_content = rich_content
 
+        # ---------------------------------
+        # APPROVE / REQUEST CORRECTIONS
+        # Then move to next Pending Review
+        # ---------------------------------
+
+        # Find the next submitted entry BEFORE changing current entry's status
+        next_pending_entry = (
+            DatasetEntry.query
+            .filter(
+                DatasetEntry.project_id == project.id,
+                DatasetEntry.status == DatasetEntry.STATUS_SUBMITTED,
+                DatasetEntry.id > entry.id
+            )
+            .order_by(DatasetEntry.id.asc())
+            .first()
+        )
+
+        # If there is nothing after this entry, look from the beginning.
+        # This prevents getting sent back to the queue while other pending
+        # entries with smaller IDs still exist.
+        if not next_pending_entry:
+            next_pending_entry = (
+                DatasetEntry.query
+                .filter(
+                    DatasetEntry.project_id == project.id,
+                    DatasetEntry.status == DatasetEntry.STATUS_SUBMITTED,
+                    DatasetEntry.id != entry.id
+                )
+                .order_by(DatasetEntry.id.asc())
+                .first()
+            )
+
+
+        # ---------------------------------
+        # Find the next Pending Review
+        # ---------------------------------
+
+        next_pending_entry = (
+            DatasetEntry.query
+            .filter(
+                DatasetEntry.project_id == project.id,
+                DatasetEntry.status == DatasetEntry.STATUS_SUBMITTED,
+                DatasetEntry.row_number > entry.row_number
+            )
+            .order_by(DatasetEntry.row_number.asc())
+            .first()
+        )
+
+        # If there is no pending entry after this one,
+        # check whether another pending entry exists earlier
+        if not next_pending_entry:
+            next_pending_entry = (
+                DatasetEntry.query
+                .filter(
+                    DatasetEntry.project_id == project.id,
+                    DatasetEntry.status == DatasetEntry.STATUS_SUBMITTED,
+                    DatasetEntry.id != entry.id
+                )
+                .order_by(DatasetEntry.row_number.asc())
+                .first()
+            )
+
+
+        # ---------------------------------
+        # APPROVE
+        # ---------------------------------
+
         if action == "approve":
+
             entry.status = DatasetEntry.STATUS_APPROVED
             entry.approved_at = datetime.utcnow()
 
-            # Deactivate all reviewer comments after approval
+            # Deactivate reviewer comments after approval
             FieldCorrection.query.filter_by(
                 entry_id=entry.id,
                 is_active=True
@@ -2617,23 +2808,111 @@ def review_question(project_id, entry_id):
                 "is_active": False
             })
 
-        elif action == "corrections":
-            entry.status = DatasetEntry.STATUS_CORRECTIONS
+            success_message = "Entry approved successfully!"
 
+
+        # ---------------------------------
+        # REQUEST CORRECTIONS
+        # ---------------------------------
+
+        elif action == "corrections":
+
+            entry.status = DatasetEntry.STATUS_CORRECTIONS
+            entry.approved_at = None
+
+            success_message = "Corrections requested successfully!"
+
+
+        # ---------------------------------
+        # INVALID ACTION
+        # ---------------------------------
+
+        else:
+
+            flash("Invalid review action.", "danger")
+
+            return redirect(
+                url_for(
+                    "project.review_question",
+                    project_id=project.id,
+                    entry_id=entry.id,
+                    from_status="submitted"
+                )
+            )
+
+
+        # Save changes
         db.session.commit()
 
-        flash("Status updated successfully!", "success")
+        flash(success_message, "success")
+
+
+        # ---------------------------------
+        # Open next Pending Review
+        # ---------------------------------
+
+        if next_pending_entry:
+
+            return redirect(
+                url_for(
+                    "project.review_question",
+                    project_id=project.id,
+                    entry_id=next_pending_entry.id,
+                    from_status="submitted"
+                )
+            )
+
+
+        # ---------------------------------
+        # No Pending Reviews left
+        # Return to Pending Reviews queue
+        # ---------------------------------
 
         return redirect(
             url_for(
-                "project.review_question",
+                "project.review_queue",
                 project_id=project.id,
-                entry_id=entry.id
+                status="submitted"
+            )
+        )
+
+        db.session.commit()
+
+        flash(success_message, "success")
+
+
+        # ---------------------------------
+        # Move reviewer to next Pending Review
+        # ---------------------------------
+
+        if next_pending_entry:
+
+            return redirect(
+                url_for(
+                    "project.review_question",
+                    project_id=project.id,
+                    entry_id=next_pending_entry.id,
+                    from_status="submitted"
+                )
+            )
+
+
+        # No Pending Reviews remaining
+        return redirect(
+            url_for(
+                "project.review_queue",
+                project_id=project.id,
+                status="submitted"
             )
         )
     
     
     role = session.get("role")
+
+    reviewer_editing_locked = (
+        entry.status != DatasetEntry.STATUS_SUBMITTED
+    )
+
     corrections = FieldCorrection.query.filter_by(
         entry_id=entry.id,
         is_active=True
@@ -2700,31 +2979,49 @@ def review_question(project_id, entry_id):
             practice_question_id=q1_id
         ).first()
             
-        # ---------------------------------
+   # ---------------------------------
     # REVIEW NAVIGATION
-    # Previous / Next entry
+    # Previous / Next within current queue
     # ---------------------------------
 
-    previous_entry = (
-        DatasetEntry.query
-        .filter(
-            DatasetEntry.project_id == project.id,
-            DatasetEntry.id < entry.id
+    from_status = request.args.get("from_status")
+
+    # Normalize URL value to actual database status
+    status_map = {
+        "submitted": DatasetEntry.STATUS_SUBMITTED,
+        "corrections": DatasetEntry.STATUS_CORRECTIONS,
+        "approved": DatasetEntry.STATUS_APPROVED,
+        "draft": DatasetEntry.STATUS_DRAFT,
+    }
+
+    navigation_status = status_map.get(
+        from_status.lower() if from_status else None
+    )
+
+    # Base navigation query
+    navigation_query = DatasetEntry.query.filter(
+        DatasetEntry.project_id == project.id
+    )
+
+    # When opened from a reviewer queue, stay inside that queue
+    if navigation_status:
+        navigation_query = navigation_query.filter(
+            DatasetEntry.status == navigation_status
         )
+
+    previous_entry = (
+        navigation_query
+        .filter(DatasetEntry.id < entry.id)
         .order_by(DatasetEntry.id.desc())
         .first()
     )
 
     next_entry = (
-        DatasetEntry.query
-        .filter(
-            DatasetEntry.project_id == project.id,
-            DatasetEntry.id > entry.id
-        )
+        navigation_query
+        .filter(DatasetEntry.id > entry.id)
         .order_by(DatasetEntry.id.asc())
         .first()
-    )
-        
+    )        
     
 
     return render_template(
@@ -2745,6 +3042,8 @@ def review_question(project_id, entry_id):
         shared_fields_locked=shared_fields_locked,
         previous_entry=previous_entry,
         next_entry=next_entry,
+        reviewer_editing_locked=reviewer_editing_locked,
+        from_status=from_status,
 
     )
     

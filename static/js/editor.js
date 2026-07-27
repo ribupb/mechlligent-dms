@@ -335,5 +335,395 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
     });
+// =========================================================
+// 6B. PREVENT DOUBLE FORM SUBMISSION
+// =========================================================
+
+document.querySelectorAll("form").forEach(function (form) {
+
+    form.addEventListener("submit", function (event) {
+
+        // Only the button that actually submitted the form
+        const clickedButton = event.submitter;
+
+        // Disable the OTHER submit buttons immediately
+        form.querySelectorAll(
+            'button[type="submit"], input[type="submit"]'
+        ).forEach(function (button) {
+
+            if (button !== clickedButton) {
+                button.disabled = true;
+            }
+
+        });
+
+        // Change ONLY clicked button to Saving...
+        if (clickedButton) {
+
+            if (clickedButton.tagName === "BUTTON") {
+
+                clickedButton.dataset.originalText =
+                    clickedButton.innerHTML;
+
+                clickedButton.innerHTML = "Saving...";
+
+            } else if (clickedButton.tagName === "INPUT") {
+
+                clickedButton.dataset.originalText =
+                    clickedButton.value;
+
+                clickedButton.value = "Saving...";
+
+            }
+
+            /*
+             * IMPORTANT:
+             * Do NOT disable clickedButton here.
+             *
+             * It has name="action" and value="approve",
+             * "corrections", "save", etc.
+             *
+             * A disabled submit button may not send its
+             * name/value to Flask.
+             */
+        }
+
+    });
+
+});
+
+
+
+
+
+
+        // =========================================================
+        // 7. LOCAL DRAFT BACKUP
+        // =========================================================
+
+        const editorForm = document.querySelector(
+            'form:has([name="question_en"], [name="scenario_en"], [name="topic_en"])'
+        );
+
+        if (editorForm && !window.disableLocalDraft) {
+
+            let hasUnsavedChanges = false;
+            let formIsSubmitting = false;
+
+            // Each question/new-entry page gets its own draft key.
+            const draftKey =
+                "mechlligent_draft_" + window.location.pathname;
+
+
+            const urlParams =
+                new URLSearchParams(window.location.search);
+
+            const clearNewDraftProjectId =
+                urlParams.get("clear_new_draft");
+
+            if (clearNewDraftProjectId) {
+
+                const newEntryDraftKey =
+                    "mechlligent_draft_" +
+                    `/project/${clearNewDraftProjectId}/new-entry`;
+
+                localStorage.removeItem(newEntryDraftKey);
+
+            }
+
+
+            // -----------------------------------------------------
+            // Clear draft after confirmed successful DB save
+            // -----------------------------------------------------
+
+            if (
+                urlParams.get("saved") === "1" ||
+                urlParams.get("submitted") === "1" ||
+                urlParams.get("resubmitted") === "1"
+            ) {
+
+                localStorage.removeItem(draftKey);
+
+            }
+
+
+            // New Entry uses a different URL/draft key
+            if (urlParams.get("new_created") === "1") {
+
+                const newEntryDraftKey =
+                    "mechlligent_draft_" +
+                    `/project/${window.location.pathname.split("/")[2]}/new-entry`;
+
+                localStorage.removeItem(newEntryDraftKey);
+
+            }
+                
+                
+
+
+            // -----------------------------------------------------
+            // Save current form into browser storage
+            // -----------------------------------------------------
+
+            function saveLocalDraft() {
+
+                const draft = {};
+
+                // Normal inputs / textareas / selects
+                editorForm
+                    .querySelectorAll("input, textarea, select")
+                    .forEach(function (field) {
+
+                        if (!field.name) {
+                            return;
+                        }
+
+                        // Don't store hidden rich_* fields separately.
+                        // Rich HTML is stored from the editor below.
+                        if (field.name.startsWith("rich_")) {
+                            return;
+                        }
+
+                        if (
+                            field.type === "submit" ||
+                            field.type === "button"
+                        ) {
+                            return;
+                        }
+
+                        if (
+                            field.type === "checkbox" ||
+                            field.type === "radio"
+                        ) {
+                            draft[field.name] = {
+                                type: field.type,
+                                value: field.value,
+                                checked: field.checked
+                            };
+                        } else {
+                            draft[field.name] = {
+                                type: "value",
+                                value: field.value
+                            };
+                        }
+
+                    });
+
+
+                // Rich editors
+                editorForm
+                    .querySelectorAll(".rich-editor")
+                    .forEach(function (editor) {
+
+                        const fieldName = editor.dataset.field;
+
+                        if (!fieldName) {
+                            return;
+                        }
+
+                        draft["rich_editor_" + fieldName] = {
+                            type: "rich",
+                            html: editor.innerHTML
+                        };
+
+                    });
+
+
+                try {
+
+                    localStorage.setItem(
+                        draftKey,
+                        JSON.stringify(draft)
+                    );
+
+                } catch (error) {
+
+                    console.warn(
+                        "Could not save local draft:",
+                        error
+                    );
+
+                }
+
+            }
+
+
+                    // -----------------------------------------------------
+            // Restore a saved local draft
+            // -----------------------------------------------------
+
+            function restoreLocalDraft() {
+
+                let savedDraft;
+
+                try {
+
+                    savedDraft = localStorage.getItem(draftKey);
+
+                    if (!savedDraft) {
+                        return;
+                    }
+
+                    savedDraft = JSON.parse(savedDraft);
+
+                } catch (error) {
+
+                    console.warn(
+                        "Could not read local draft:",
+                        error
+                    );
+
+                    return;
+                }
+
+
+                // Ask before replacing what is currently displayed
+                const restore = confirm(
+                    "An unsaved draft was found for this entry. " +
+                    "Would you like to restore it?"
+                );
+
+                if (!restore) {
+                    return;
+                }
+
+
+                Object.entries(savedDraft).forEach(
+                    function ([fieldName, data]) {
+
+                        // -----------------------------
+                        // Rich editor
+                        // -----------------------------
+
+                        if (data.type === "rich") {
+
+                            const realFieldName =
+                                fieldName.replace(
+                                    "rich_editor_",
+                                    ""
+                                );
+
+                            const editor =
+                                editorForm.querySelector(
+                                    `.rich-editor[data-field="${realFieldName}"]`
+                                );
+
+                            if (editor) {
+                                editor.innerHTML = data.html || "";
+                            }
+
+                            return;
+                        }
+
+
+                        // -----------------------------
+                        // Normal field
+                        // -----------------------------
+
+                        const fields =
+                            editorForm.querySelectorAll(
+                                `[name="${fieldName}"]`
+                            );
+
+
+                        fields.forEach(function (field) {
+
+                            if (
+                                data.type === "checkbox" ||
+                                data.type === "radio"
+                            ) {
+
+                                if (field.value === data.value) {
+                                    field.checked = data.checked;
+                                }
+
+                            } else {
+
+                                field.value = data.value || "";
+
+                            }
+
+                        });
+
+                    }
+                );
+
+
+                console.log("Local draft restored.");
+
+            }
+
+            if (urlParams.get("saved") !== "1") {
+                restoreLocalDraft();
+            }
+
+
+            // -----------------------------------------------------
+            // Save while user is working
+            // -----------------------------------------------------
+
+            let draftTimer = null;
+
+            editorForm.addEventListener("input", function () {
+
+                hasUnsavedChanges = true;
+
+                clearTimeout(draftTimer);
+
+                draftTimer = setTimeout(
+                    saveLocalDraft,
+                    500
+                );
+
+            });
+
+            editorForm.addEventListener("change", function () {
+
+                hasUnsavedChanges = true;
+
+                clearTimeout(draftTimer);
+
+                draftTimer = setTimeout(
+                    saveLocalDraft,
+                    300
+                );
+
+            });
+
+
+            // Backup periodically as extra protection
+            setInterval(
+                saveLocalDraft,
+                10000
+            );
+
+
+            // -----------------------------------------------------
+            // Warn before leaving with unsaved changes
+            // -----------------------------------------------------
+
+            editorForm.addEventListener("submit", function () {
+
+                formIsSubmitting = true;
+                hasUnsavedChanges = false;
+
+            });
+
+
+            window.addEventListener("beforeunload", function (event) {
+
+                if (hasUnsavedChanges && !formIsSubmitting) {
+
+                    // Save one last backup before leaving
+                    saveLocalDraft();
+
+                    event.preventDefault();
+                    event.returnValue = "";
+
+                }
+
+            });
+
+        }
 
 });

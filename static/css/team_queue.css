@@ -304,3 +304,171 @@
     }
 
 }
+
+
+/* =========================================================
+   CARD / TABLE VIEW SWITCHER
+========================================================= */
+
+.queue-view-switcher {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px;
+    gap: 3px;
+
+    background: #e9eef6;
+    border: 1px solid #d7dfeb;
+    border-radius: 10px;
+}
+
+.queue-view-btn {
+    border: none;
+    background: transparent;
+
+    padding: 6px 12px;
+    border-radius: 7px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    color: #64748b;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.queue-view-btn:hover {
+    background: rgba(255, 255, 255, 0.65);
+    color: #1e293b;
+}
+
+.queue-view-btn.active {
+    background: #ffffff;
+    color: #0d6efd;
+
+    box-shadow:
+        0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
+
+/* =========================================================
+   TABLE VIEW
+========================================================= */
+
+.team-table-view {
+    background: #ffffff;
+
+    border: 1px solid #e4eaf2;
+    border-radius: 16px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.team-queue-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.team-queue-table thead th {
+    background: #f8fafc;
+
+    padding: 15px 16px;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    color: #475569;
+
+    border-bottom: 1px solid #e2e8f0;
+
+    white-space: nowrap;
+}
+
+.team-queue-table tbody td {
+    padding: 16px;
+
+    font-size: 14px;
+    color: #334155;
+
+    vertical-align: middle;
+
+    border-bottom: 1px solid #eef2f7;
+}
+
+.team-queue-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.team-queue-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.team-queue-table tbody tr:hover {
+    background: #f8fbff;
+}
+
+
+/* Question ID */
+
+.team-queue-table td:first-child {
+    font-weight: 700;
+    color: #1e293b;
+
+    white-space: nowrap;
+}
+
+
+/* Question column */
+
+.team-queue-table .table-question {
+    max-width: 430px;
+
+    line-height: 1.45;
+
+    color: #475569;
+}
+
+
+/* Keep status badge together */
+
+.team-queue-table .team-status {
+    white-space: nowrap;
+}
+
+
+/* Action button */
+
+.team-queue-table td:last-child {
+    white-space: nowrap;
+}
+
+.team-queue-table td:last-child .btn {
+    min-width: 70px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .team-queue-header {
+        gap: 15px;
+    }
+
+    .team-table-view {
+        overflow-x: auto;
+    }
+
+    .team-queue-table {
+        min-width: 850px;
+    }
+}

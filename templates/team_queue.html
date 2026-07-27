@@ -47,6 +47,29 @@
                 {{ entries|length }} Entries
             </span>
 
+            <!-- View Switcher -->
+            <div class="queue-view-switcher">
+
+                <button
+                    type="button"
+                    id="cardViewBtn"
+                    class="queue-view-btn active"
+                    title="Card View"
+                >
+                    ▦ Cards
+                </button>
+
+                <button
+                    type="button"
+                    id="tableViewBtn"
+                    class="queue-view-btn"
+                    title="Table View"
+                >
+                    ☷ Table
+                </button>
+
+            </div>
+
             <a
                 href="{{ url_for('project.project_dashboard', project_id=project.id) }}"
                 class="btn btn-outline-secondary btn-sm"
@@ -65,7 +88,7 @@
 
     {% if entries %}
 
-        <div class="row g-3">
+        <div id="cardView" class="row g-3">
 
             {% for entry in entries %}
 
@@ -201,7 +224,8 @@
                                 <a
                                     href="{{ url_for(
                                         'project.edit_question',
-                                        entry_id=entry.id
+                                        entry_id=entry.id,
+                                        from_status=current_status
                                     ) }}"
                                     class="btn btn-primary btn-sm"
                                 >
@@ -216,7 +240,8 @@
                                 <a
                                     href="{{ url_for(
                                         'project.edit_question',
-                                        entry_id=entry.id
+                                        entry_id=entry.id,
+                                        from_status=current_status
                                     ) }}"
                                     class="btn btn-danger btn-sm"
                                 >
@@ -231,7 +256,8 @@
                                 <a
                                     href="{{ url_for(
                                         'project.view_question',
-                                        entry_id=entry.id
+                                        entry_id=entry.id,
+                                        from_status=current_status
                                     ) }}"
                                     class="btn btn-outline-primary btn-sm"
                                 >
@@ -246,7 +272,8 @@
                                 <a
                                     href="{{ url_for(
                                         'project.view_question',
-                                        entry_id=entry.id
+                                        entry_id=entry.id,
+                                        from_status=current_status
                                     ) }}"
                                     class="btn btn-outline-success btn-sm"
                                 >
@@ -262,6 +289,164 @@
                 </div>
 
             {% endfor %}
+
+        </div>
+
+
+        <!-- =========================
+            TABLE VIEW
+        ========================== -->
+
+        <div id="tableView" class="team-table-view" style="display: none;">
+
+            <div class="table-responsive">
+
+                <table class="table align-middle team-queue-table">
+
+                    <thead>
+                        <tr>
+                            <th>Question ID</th>
+                            <th>Topic</th>
+                            <th>Sub Topic</th>
+                            <th>Question</th>
+                            <th>Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for entry in entries %}
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    {{ entry.practice_question_id }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ entry.topic_en or "—" }}
+                            </td>
+
+                            <td>
+                                {{ entry.sub_topic_en or "—" }}
+                            </td>
+
+                            <td class="table-question">
+
+                                {% if entry.question_en %}
+
+                                    {{ entry.question_en[:100] }}
+
+                                    {% if entry.question_en|length > 100 %}
+                                        ...
+                                    {% endif %}
+
+                                {% else %}
+                                    —
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% if entry.status == entry.STATUS_DRAFT %}
+
+                                    <span class="team-status status-draft">
+                                        Draft
+                                    </span>
+
+                                {% elif entry.status == entry.STATUS_SUBMITTED %}
+
+                                    <span class="team-status status-pending">
+                                        Pending Review
+                                    </span>
+
+                                {% elif entry.status == entry.STATUS_CORRECTIONS %}
+
+                                    <span class="team-status status-correction">
+                                        Corrections Requested
+                                    </span>
+
+                                {% elif entry.status == entry.STATUS_APPROVED %}
+
+                                    <span class="team-status status-approved">
+                                        Approved
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td class="text-end">
+
+                                {% if entry.status == entry.STATUS_DRAFT %}
+
+                                    <a
+                                        href="{{ url_for(
+                                            'project.edit_question',
+                                            entry_id=entry.id,
+                                            from_status=current_status
+                                        ) }}"
+                                        class="btn btn-primary btn-sm">
+                                        Edit →
+                                    </a>
+
+
+                                {% elif entry.status == entry.STATUS_CORRECTIONS %}
+
+                                    <a
+                                        href="{{ url_for(
+                                            'project.edit_question',
+                                            entry_id=entry.id,
+                                            from_status=current_status
+                                        ) }}"
+                                        class="btn btn-danger btn-sm">
+                                        Fix →
+                                    </a>
+
+
+                                {% elif entry.status == entry.STATUS_SUBMITTED %}
+
+                                    <a
+                                        href="{{ url_for(
+                                            'project.view_question',
+                                            entry_id=entry.id,
+                                            from_status=current_status
+                                        ) }}"
+                                        class="btn btn-outline-primary btn-sm">
+                                        View →
+                                    </a>
+
+
+                                {% elif entry.status == entry.STATUS_APPROVED %}
+
+                                    <a
+                                        href="{{ url_for(
+                                            'project.view_question',
+                                            entry_id=entry.id,
+                                            from_status=current_status
+                                        ) }}"
+                                        class="btn btn-outline-success btn-sm">
+                                        View →
+                                    </a>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
 
         </div>
 
@@ -302,5 +487,63 @@
     {% endif %}
 
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const cardBtn = document.getElementById("cardViewBtn");
+    const tableBtn = document.getElementById("tableViewBtn");
+
+    const cardView = document.getElementById("cardView");
+    const tableView = document.getElementById("tableView");
+
+    // No entries = no views to switch
+    if (!cardBtn || !tableBtn || !cardView || !tableView) {
+        return;
+    }
+
+
+    function setView(view) {
+
+        if (view === "table") {
+
+            cardView.style.display = "none";
+            tableView.style.display = "block";
+
+            cardBtn.classList.remove("active");
+            tableBtn.classList.add("active");
+
+        } else {
+
+            cardView.style.display = "";
+            tableView.style.display = "none";
+
+            tableBtn.classList.remove("active");
+            cardBtn.classList.add("active");
+        }
+
+        localStorage.setItem("teamQueueView", view);
+    }
+
+
+    cardBtn.addEventListener("click", function () {
+        setView("card");
+    });
+
+
+    tableBtn.addEventListener("click", function () {
+        setView("table");
+    });
+
+
+    // Restore previous preference
+    const savedView =
+        localStorage.getItem("teamQueueView") || "card";
+
+    setView(savedView);
+
+});
+</script>
 
 {% endblock %}

@@ -1,140 +1,589 @@
 {% extends "base.html" %}
 
+{% block head %}
+    {{ super() }}
+
+    <!-- Reuse the same queue styling as Team Side -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/team_queue.css') }}"
+    >
+{% endblock %}
+
+
 {% block content %}
 
 {% include "includes/navbar.html" %}
 
-<div class="container mt-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container-fluid py-4 team-queue-container">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="team-queue-header">
 
         <div>
 
-            <h2>Review Queue</h2>
+            <h4 class="team-queue-title">
 
-            <p class="text-muted mb-0">
-                Showing:
-                <strong>{{ current_status.replace("_"," ").title() }}</strong>
+                {% if current_status == "SUBMITTED" %}
+                    Pending Reviews
+                {% elif current_status == "CORRECTIONS_REQUESTED" %}
+                    Corrections Requested
+                {% elif current_status == "APPROVED" %}
+                    Approved
+                {% elif current_status == "DRAFT" %}
+                    Draft
+                {% else %}
+                    Review Queue
+                {% endif %}
+
+            </h4>
+
+
+            <p class="team-queue-subtitle">
+
+                {% if current_status == "SUBMITTED" %}
+                    Entries currently waiting for reviewer approval
+
+                {% elif current_status == "CORRECTIONS_REQUESTED" %}
+                    Entries returned to the team for corrections
+
+                {% elif current_status == "APPROVED" %}
+                    Entries approved and finalized by the reviewer
+
+                {% elif current_status == "DRAFT" %}
+                    Entries that are still being worked on
+
+                {% else %}
+                    View entries in this workflow stage
+
+                {% endif %}
+
             </p>
 
         </div>
 
-        <a href="{{ url_for('project.project_dashboard',
-            project_id=project.id) }}"
-            class="btn btn-secondary">
 
-            ← Back to Dashboard
+        <!-- RIGHT SIDE -->
 
-        </a>
+        <div class="d-flex align-items-center gap-3">
+
+            <!-- Entry Count -->
+
+            <span class="team-queue-count">
+                {{ entries|length }} Entries
+            </span>
+
+
+            <!-- Card / Table Switcher -->
+
+            <div class="queue-view-switcher">
+
+                <button
+                    type="button"
+                    class="queue-view-btn active"
+                    id="cardViewBtn"
+                    onclick="setQueueView('cards')"
+                >
+                    ▦ Cards
+                </button>
+
+                <button
+                    type="button"
+                    class="queue-view-btn"
+                    id="tableViewBtn"
+                    onclick="setQueueView('table')"
+                >
+                    ☷ Table
+                </button>
+
+            </div>
+
+
+            <!-- Dashboard -->
+
+            <a
+                href="{{ url_for(
+                    'project.project_dashboard',
+                    project_id=project.id
+                ) }}"
+                class="btn btn-outline-secondary btn-sm"
+            >
+                ← Dashboard
+            </a>
+
+        </div>
 
     </div>
 
+
+
     {% if entries %}
 
-    <div class="row">
 
-        {% for entry in entries %}
+    <!-- =====================================================
+         CARD VIEW
+    ====================================================== -->
 
-        <div class="col-lg-6 mb-4">
+    <div id="cardView">
 
-            <div class="card shadow-sm h-100">
+        <div class="row g-3">
 
-                <div class="card-body">
+            {% for entry in entries %}
 
-                    <div class="d-flex justify-content-between">
+            <div class="col-lg-6">
+
+                <div class="team-entry-card">
+
+
+                    <!-- CARD HEADER -->
+
+                    <div class="team-entry-header">
 
                         <div>
 
-                            <h5 class="mb-1">
+                            <h5 class="team-entry-id">
                                 {{ entry.practice_question_id }}
                             </h5>
 
-                            <small class="text-muted">
-                                {{ entry.topic_en }}
-                            </small>
+                            <span class="team-entry-topic">
+
+                                {% if entry.topic_id %}
+                                    {{ entry.topic_id }} ·
+                                {% endif %}
+
+                                {{ entry.topic_en or "—" }}
+
+                            </span>
 
                         </div>
 
-                        <span class="badge bg-primary">
-                            {{ entry.status }}
-                        </span>
+
+                        <!-- STATUS -->
+
+                        {% if entry.status == entry.STATUS_DRAFT %}
+
+                            <span class="team-status status-draft">
+                                Draft
+                            </span>
+
+                        {% elif entry.status == entry.STATUS_SUBMITTED %}
+
+                            <span class="team-status status-pending">
+                                Pending Review
+                            </span>
+
+                        {% elif entry.status == entry.STATUS_CORRECTIONS %}
+
+                            <span class="team-status status-correction">
+                                Corrections Requested
+                            </span>
+
+                        {% elif entry.status == entry.STATUS_APPROVED %}
+
+                            <span class="team-status status-approved">
+                                Approved
+                            </span>
+
+                        {% else %}
+
+                            <span class="team-status status-draft">
+                                {{ entry.status }}
+                            </span>
+
+                        {% endif %}
 
                     </div>
 
-                    <hr>
 
-                    <p class="mb-2">
 
-                        <strong>Sub Topic:</strong>
+                    <!-- CARD BODY -->
 
-                        {{ entry.sub_topic_en }}
+                    <div class="team-entry-body">
 
-                    </p>
 
-                    <p class="mb-3">
+                        <!-- Sub Topic -->
 
-                        <strong>Question</strong>
+                        <div class="entry-field">
 
-                        <br>
+                            <span class="entry-label">
+                                Sub Topic
+                            </span>
 
-                        {{ entry.question_en[:150] }}...
+                            <span>
+                                {{ entry.sub_topic_en or "—" }}
+                            </span>
 
-                    </p>
+                        </div>
 
-                    {% if session.role == "REVIEWER" %}
 
-                    <a href="{{ url_for(
-                        'project.review_question',
-                        project_id=project.id,
-                        entry_id=entry.id
-                    ) }}"
-                    class="btn btn-primary">
+                        <!-- Question -->
 
-                        Review →
+                        <div class="entry-field">
 
-                    </a>
+                            <span class="entry-label">
+                                Question
+                            </span>
 
-                    {% else %}
+                            <span class="entry-question">
 
-                    <a href="{{ url_for(
-                        'project.review_question',
-                        project_id=project.id,
-                        entry_id=entry.id
-                    ) }}"
-                    class="btn btn-success">
+                                {% if entry.question_en %}
 
-                        Edit →
+                                    {{ entry.question_en[:180] }}
 
-                    </a>
+                                    {% if entry.question_en|length > 180 %}
+                                        ...
+                                    {% endif %}
 
-                    {% endif %}
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </span>
+
+                        </div>
+
+
+                        <!-- Correction Note -->
+
+                        {% if entry.status == entry.STATUS_CORRECTIONS
+                              and entry.correction_note %}
+
+                        <div class="correction-box">
+
+                            <strong>
+                                Reviewer Correction
+                            </strong>
+
+                            <p>
+                                {{ entry.correction_note }}
+                            </p>
+
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+
+                    <!-- ACTION -->
+
+                    <div class="team-entry-actions">
+
+                        <a
+                            href="{{ url_for(
+                                'project.review_question',
+                                project_id=project.id,
+                                entry_id=entry.id,
+                                from_status=current_status
+                            ) }}"
+                            class="btn btn-primary btn-sm"
+                        >
+
+                            {% if session.role == "REVIEWER" %}
+                                Review →
+                            {% else %}
+                                Edit →
+                            {% endif %}
+
+                        </a>
+
+                    </div>
 
                 </div>
 
             </div>
 
+            {% endfor %}
+
         </div>
 
-        {% endfor %}
+    </div>
+
+
+
+    <!-- =====================================================
+         TABLE VIEW
+    ====================================================== -->
+
+    <div
+        id="tableView"
+        class="team-table-view"
+        style="display: none;"
+    >
+
+        <div class="table-responsive">
+
+            <table class="table team-queue-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Question ID</th>
+
+                        <th>Topic</th>
+
+                        <th>Sub Topic</th>
+
+                        <th>Question</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for entry in entries %}
+
+                    <tr>
+
+
+                        <!-- QUESTION ID -->
+
+                        <td>
+                            {{ entry.practice_question_id }}
+                        </td>
+
+
+                        <!-- TOPIC -->
+
+                        <td>
+                            {{ entry.topic_en or "—" }}
+                        </td>
+
+
+                        <!-- SUB TOPIC -->
+
+                        <td>
+                            {{ entry.sub_topic_en or "—" }}
+                        </td>
+
+
+                        <!-- QUESTION -->
+
+                        <td class="table-question">
+
+                            {% if entry.question_en %}
+
+                                {{ entry.question_en[:120] }}
+
+                                {% if entry.question_en|length > 120 %}
+                                    ...
+                                {% endif %}
+
+                            {% else %}
+
+                                —
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- STATUS -->
+
+                        <td>
+
+                            {% if entry.status == entry.STATUS_DRAFT %}
+
+                                <span class="team-status status-draft">
+                                    Draft
+                                </span>
+
+                            {% elif entry.status == entry.STATUS_SUBMITTED %}
+
+                                <span class="team-status status-pending">
+                                    Pending Review
+                                </span>
+
+                            {% elif entry.status == entry.STATUS_CORRECTIONS %}
+
+                                <span class="team-status status-correction">
+                                    Corrections Requested
+                                </span>
+
+                            {% elif entry.status == entry.STATUS_APPROVED %}
+
+                                <span class="team-status status-approved">
+                                    Approved
+                                </span>
+
+                            {% else %}
+
+                                <span class="team-status status-draft">
+                                    {{ entry.status }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ACTION -->
+
+                        <td>
+
+                            <a
+                                href="{{ url_for(
+                                    'project.review_question',
+                                    project_id=project.id,
+                                    entry_id=entry.id,
+                                    from_status=current_status
+                                ) }}"
+                                class="btn btn-primary btn-sm"
+                            >
+
+                                {% if session.role == "REVIEWER" %}
+                                    Review →
+                                {% else %}
+                                    Edit →
+                                {% endif %}
+
+                            </a>
+
+                        </td>
+
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
 
     </div>
+
+
 
     {% else %}
 
-    <div class="text-center py-5">
 
-        <h4>No entries found.</h4>
+    <!-- =====================================================
+         EMPTY STATE
+    ====================================================== -->
 
-        <p class="text-muted">
+    <div class="team-queue-empty">
 
-            There are currently no entries in this category.
+        <div class="empty-icon">
+            ✓
+        </div>
+
+        <h4>
+            No entries found
+        </h4>
+
+        <p>
+
+            There are currently no entries in
+
+            {% if current_status == "SUBMITTED" %}
+                Pending Reviews.
+            {% elif current_status == "CORRECTIONS_REQUESTED" %}
+                Corrections Requested.
+            {% elif current_status == "APPROVED" %}
+                Approved.
+            {% elif current_status == "DRAFT" %}
+                Draft.
+            {% else %}
+                this category.
+            {% endif %}
 
         </p>
 
+
+        <a
+            href="{{ url_for(
+                'project.project_dashboard',
+                project_id=project.id
+            ) }}"
+            class="btn btn-primary btn-sm"
+        >
+            Back to Dashboard
+        </a>
+
     </div>
+
 
     {% endif %}
 
+
 </div>
+
+
+
+<!-- =========================================================
+     CARD / TABLE VIEW JAVASCRIPT
+========================================================= -->
+
+<script>
+
+function setQueueView(view) {
+
+    const cardView = document.getElementById("cardView");
+    const tableView = document.getElementById("tableView");
+
+    const cardButton = document.getElementById("cardViewBtn");
+    const tableButton = document.getElementById("tableViewBtn");
+
+
+    if (!cardView || !tableView) {
+        return;
+    }
+
+
+    if (view === "table") {
+
+        cardView.style.display = "none";
+        tableView.style.display = "block";
+
+        cardButton.classList.remove("active");
+        tableButton.classList.add("active");
+
+    } else {
+
+        cardView.style.display = "block";
+        tableView.style.display = "none";
+
+        tableButton.classList.remove("active");
+        cardButton.classList.add("active");
+
+    }
+
+
+    // Remember reviewer preference
+    localStorage.setItem(
+        "reviewerQueueView",
+        view
+    );
+
+}
+
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const savedView =
+        localStorage.getItem("reviewerQueueView") || "cards";
+
+    setQueueView(savedView);
+
+});
+
+</script>
+
 
 {% endblock %}

@@ -2,13 +2,18 @@
 
     <div class="container-fluid px-4">
 
-        <!-- Existing Logo -->
+        <!-- Logo -->
         <a class="navbar-brand logo-brand"
            href="{{ url_for('workspace.workspace_page') }}">
 
-            <img src="{{ url_for('static', filename='images/mechlligent-logo.png') }}"
-                 alt="Mechlligent Engineering"
-                 class="navbar-logo">
+            <img
+                src="{{ url_for(
+                    'static',
+                    filename='images/mechlligent-logo.png'
+                ) }}"
+                alt="Mechlligent Engineering"
+                class="navbar-logo"
+            >
 
         </a>
 
@@ -19,34 +24,151 @@
             <!-- Navigation Buttons -->
             <div class="navbar-nav-links">
 
+
+               {% set workflow_status = request.args.get('from_status') %}
+
+                {% if project and workflow_status %}
+
+                    {# ==============================
+                    REVIEWER WORKFLOW NAV
+                    ============================== #}
+
+                    {% if session.get("role") == "REVIEWER" %}
+
+                        {% if workflow_status == "submitted" %}
+
+                            <a href="{{ url_for(
+                                'project.review_queue',
+                                project_id=project.id,
+                                status='submitted'
+                            ) }}"
+                            class="navbar-nav-btn workflow-nav-btn">
+                                Pending Reviews
+                            </a>
+
+                        {% elif workflow_status == "corrections" %}
+
+                            <a href="{{ url_for(
+                                'project.review_queue',
+                                project_id=project.id,
+                                status='corrections'
+                            ) }}"
+                            class="navbar-nav-btn workflow-nav-btn">
+                                Corrections Requested
+                            </a>
+
+                        {% elif workflow_status == "approved" %}
+
+                            <a href="{{ url_for(
+                                'project.review_queue',
+                                project_id=project.id,
+                                status='approved'
+                            ) }}"
+                            class="navbar-nav-btn workflow-nav-btn">
+                                Approved
+                            </a>
+
+                        {% endif %}
+
+
+                    {# ==============================
+                    TEAM WORKFLOW NAV
+                    ============================== #}
+
+                    {% else %}
+
+                        {% if workflow_status == "Draft" %}
+                            {% set workflow_label = "Drafts" %}
+
+                        {% elif workflow_status == "Pending Review" %}
+                            {% set workflow_label = "Pending Review" %}
+
+                        {% elif workflow_status == "Corrections Requested" %}
+                            {% set workflow_label = "Corrections Requested" %}
+
+                        {% elif workflow_status == "Approved" %}
+                            {% set workflow_label = "Approved" %}
+
+                        {% else %}
+                            {% set workflow_label = none %}
+                        {% endif %}
+
+
+                        {% if workflow_label %}
+
+                            <a href="{{ url_for(
+                                'project.team_queue',
+                                project_id=project.id,
+                                status=workflow_status
+                            ) }}"
+                            class="navbar-nav-btn workflow-nav-btn">
+
+                                {{ workflow_label }}
+
+                            </a>
+
+                        {% endif %}
+
+                    {% endif %}
+
+                {% endif %}
+
+
+
+                <!-- =========================================
+                     NORMAL NAVIGATION
+                ========================================== -->
+
                 {% if project %}
 
-                    <a href="{{ url_for('project.view_dataset', project_id=project.id) }}"
-                       class="navbar-nav-btn">
+                    <a
+                        href="{{ url_for(
+                            'project.view_dataset',
+                            project_id=project.id
+                        ) }}"
+                        class="navbar-nav-btn"
+                    >
                         View Dataset
                     </a>
 
-                    <a href="{{ url_for('project.project_dashboard', project_id=project.id) }}"
-                       class="navbar-nav-btn">
+
+                    <a
+                        href="{{ url_for(
+                            'project.project_dashboard',
+                            project_id=project.id
+                        ) }}"
+                        class="navbar-nav-btn"
+                    >
                         Dashboard
                     </a>
 
                 {% endif %}
 
-                <a href="{{ url_for('workspace.workspace_page') }}"
-                   class="navbar-nav-btn">
+
+                <a
+                    href="{{ url_for(
+                        'workspace.workspace_page'
+                    ) }}"
+                    class="navbar-nav-btn"
+                >
                     Workspace
                 </a>
+
 
             </div>
 
 
-            <!-- Existing User Chip -->
+
+            <!-- =========================================
+                 USER CHIP
+            ========================================== -->
+
             <div class="user-chip">
 
                 <div class="user-avatar">
                     {{ session["full_name"][0] }}
                 </div>
+
 
                 <div class="user-info">
 
@@ -54,16 +176,22 @@
                         {{ session["full_name"] }}
                     </span>
 
-                    <small>Logged In</small>
+                    <small>
+                        Logged In
+                    </small>
 
                 </div>
 
-                <a href="{{ url_for('auth.logout') }}"
-                   class="logout-btn">
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-btn"
+                >
                     Logout
                 </a>
 
             </div>
+
 
         </div>
 

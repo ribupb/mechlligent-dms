@@ -1396,17 +1396,30 @@
 <div class="sticky-footer">
 
     {% if previous_entry %}
-    <a id="prevBtn"
-   href="{{ url_for('project.review_question',
-                 project_id=project.id,
-                 entry_id=previous_entry.id) }}"
-   class="btn btn-secondary">
+
+    <a
+        href="{{ url_for(
+            'project.review_question',
+            project_id=project.id,
+            entry_id=previous_entry.id,
+            from_status=request.args.get('from_status')
+        ) }}"
+        class="btn btn-secondary"
+    >
         ← Previous
     </a>
-    {% else %}
-    <div></div>
-    {% endif %}
 
+    {% else %}
+
+    <button
+        type="button"
+        class="btn btn-secondary"
+        disabled
+    >
+        ← Previous
+    </button>
+
+    {% endif %}
 
 
 
@@ -1462,24 +1475,30 @@
 
 
 
-        <a href="{{ url_for('project.review_queue',
-                            project_id=project.id,
-                            status='submitted') }}"
-        class="btn btn-outline-primary">
-            📋 Pending Reviews
-        </a>
-
-
     {% if next_entry %}
-    <a id="nextBtn"
-   href="{{ url_for('project.review_question',
-                 project_id=project.id,
-                 entry_id=next_entry.id) }}"
-   class="btn btn-primary">
+
+    <a
+        href="{{ url_for(
+            'project.review_question',
+            project_id=project.id,
+            entry_id=next_entry.id,
+            from_status=request.args.get('from_status')
+        ) }}"
+        class="btn btn-primary"
+    >
         Next →
     </a>
+
     {% else %}
-    <div></div>
+
+    <button
+        type="button"
+        class="btn btn-primary"
+        disabled
+    >
+        Next →
+    </button>
+
     {% endif %}
 
 </div>
@@ -1709,6 +1728,9 @@ subTopicSelect.addEventListener("change", function () {
 </script>
 
 <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
+<script>
+    window.disableLocalDraft = true;
+</script>
 {% endblock %}      {# closes content #}
 
 {% block scripts %}
@@ -1877,29 +1899,19 @@ if(sharedFields && toggleButton){
 </script>
 
 
+{% if reviewer_editing_locked %}
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    const reviewerCanEdit =
-        {{ 'true' if entry.status == entry.STATUS_SUBMITTED else 'false' }};
-
-    if (reviewerCanEdit) {
-        return;
-    }
-
     const form = document.querySelector("#editor-content form");
 
-    if (!form) {
-        return;
-    }
+    if (!form) return;
 
-    // Lock normal inputs and textareas
+    // Lock normal fields
     form.querySelectorAll("input, textarea").forEach(function (field) {
 
-        // Don't interfere with modal/comment internals
-        if (field.id === "correctionComment") {
-            return;
-        }
+        if (field.id === "correctionComment") return;
 
         field.readOnly = true;
     });
@@ -1909,17 +1921,21 @@ document.addEventListener("DOMContentLoaded", function () {
         field.disabled = true;
     });
 
-    // Lock rich text editors created by editor.js
-    form.querySelectorAll(".rich-editor").forEach(function (editor) {
-        editor.contentEditable = "false";
-    });
+    // Lock rich text editors
+    form.querySelectorAll(".rich-editor, [contenteditable]").forEach(
+        function (editor) {
+            editor.contentEditable = "false";
+        }
+    );
 
-    // Disable correction comment buttons
+    // Lock correction comment buttons
     form.querySelectorAll(".correction-btn").forEach(function (button) {
         button.disabled = true;
     });
 
 });
 </script>
+
+{% endif %}
 {% endblock %}
 

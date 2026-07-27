@@ -70,17 +70,6 @@
 
     </div>
 
-        {% if entry %}
-        {% set editing_locked =
-            role == "TEAM_MEMBER"
-            and (
-                entry.status == entry.STATUS_SUBMITTED
-                or entry.status == entry.STATUS_APPROVED
-            )
-        %}
-        {% else %}
-        {% set editing_locked = false %}
-        {% endif %}
 
     <form method="POST">
 
@@ -105,7 +94,7 @@
 
     </p>
 
-    {% if role == "TEAM_MEMBER" %}
+    {% if role in ["TEAM", "TEAM_MEMBER"] %}
 
     <a
         href="{{ url_for(
@@ -224,7 +213,7 @@
                     class="form-control {% if correction_map.get('topic_ml') %}border border-warning border-3{% endif %}"
                     id="topicMl"
                     name="topic_ml"
-                    value="{{ entry.topic_ml or '' }}">
+                    value="{{ entry.topic_ml if entry else '' }}">
             </div>
 
         </div>
@@ -318,7 +307,7 @@
                 class="form-control {% if correction_map.get('sub_topic_ml') %}border border-warning border-3{% endif %}"
                 id="subTopicMl"
                 name="sub_topic_ml"
-                value="{{ entry.sub_topic_ml or '' }}">
+                value="{{ entry.sub_topic_ml if entry else '' }}">
             </div>
 
         </div>
@@ -379,7 +368,7 @@
                     class="form-control {% if correction_map.get('scenario_en') %}border border-warning border-3{% endif %}"
                     name="scenario_en"
                     id="scenarioEn"
-                    rows="4">{{ entry.scenario_en or "" }}</textarea>
+                    rows="4">{{ entry.scenario_en if entry else '' }}</textarea>
 
             </div>
 
@@ -400,7 +389,7 @@
                     class="form-control {% if correction_map.get('scenario_ml') %}border border-warning border-3{% endif %}"
                     name="scenario_ml"
                     id="scenarioMl"
-                    rows="4">{{ entry.scenario_ml or "" }}</textarea>
+                    rows="4">{{ entry.scenario_ml if entry else '' }}</textarea>
 
 
             </div>
@@ -440,7 +429,7 @@
                     class="form-control {% if correction_map.get('scenario_explanation_en') %}border border-warning border-3{% endif %}"
                     name="scenario_explanation_en"
                     id="scenarioExplanationEn"
-                    rows="5">{{ entry.scenario_explanation_en or "" }}</textarea>
+                    rows="5">{{ entry.scenario_explanation_en if entry else '' }}</textarea>
 
             </div>
 
@@ -461,7 +450,7 @@
                     class="form-control {% if correction_map.get('scenario_explanation_ml') %}border border-warning border-3{% endif %}"
                     name="scenario_explanation_ml"
                     id="scenarioExplanationMl"
-                    rows="5">{{ entry.scenario_explanation_ml or "" }}</textarea>
+                    rows="5">{{ entry.scenario_explanation_ml if entry else '' }}</textarea>
 
             </div>
 
@@ -501,7 +490,7 @@
                     class="form-control {% if correction_map.get('memory_shortcut_en') %}border border-warning border-3{% endif %}"
                     name="memory_shortcut_en"
                     id="memoryShortcutEn"
-                    rows="3">{{ entry.memory_shortcut_en or ""  }}</textarea>
+                    rows="3">{{ entry.memory_shortcut_en if entry else ''  }}</textarea>
 
 
             </div>
@@ -523,7 +512,7 @@
                     class="form-control {% if correction_map.get('memory_shortcut_ml') %}border border-warning border-3{% endif %}"
                     name="memory_shortcut_ml"
                     id="memoryShortcutMl"
-                    rows="3">{{ entry.memory_shortcut_ml or "" }}</textarea>
+                    rows="3">{{ entry.memory_shortcut_ml if entry else '' }}</textarea>
 
             </div>
 
@@ -562,7 +551,7 @@
                     class="form-control {% if correction_map.get('applies_when_en') %}border border-warning border-3{% endif %}"
                     name="applies_when_en"
                     id="appliesWhenEn"
-                    rows="3">{{ entry.applies_when_en or "" }}</textarea>
+                    rows="3">{{ entry.applies_when_en if entry else '' }}</textarea>
             </div>
 
             <div class="col-md-6">
@@ -582,7 +571,7 @@
                     class="form-control {% if correction_map.get('applies_when_ml') %}border border-warning border-3{% endif %}"
                     name="applies_when_ml"
                     id="appliesWhenMl"                    
-                    rows="3">{{ entry.applies_when_ml or "" }}</textarea>
+                    rows="3">{{ entry.applies_when_ml if entry else '' }}</textarea>
 
 
             </div>
@@ -622,7 +611,7 @@
                     class="form-control {% if correction_map.get('not_applies_when_en') %}border border-warning border-3{% endif %}"
                     name="not_applies_when_en"
                     id="notAppliesWhenEn" 
-                    rows="3">{{ entry.not_applies_when_en or "" }}</textarea>
+                    rows="3">{{ entry.not_applies_when_en if entry else '' }}</textarea>
 
 
             </div>
@@ -644,7 +633,7 @@
                     class="form-control {% if correction_map.get('not_applies_when_ml') %}border border-warning border-3{% endif %}"
                     name="not_applies_when_ml"
                     id="notAppliesWhenMl" 
-                    rows="3">{{ entry.not_applies_when_ml or "" }}</textarea>
+                    rows="3">{{ entry.not_applies_when_ml if entry else '' }}</textarea>
 
             </div>
 
@@ -676,13 +665,13 @@
                         class="form-control rich-editor"
                         contenteditable="{{ 'false' if team_editing_locked else 'true' }}"
                         data-field="question_en"
-                    >{{ entry.get_rich("question_en") | safe }}</div>
+                    >{% if entry %}{{ entry.get_rich("question_en") | safe }}{% endif %}</div>
 
                     <input
                         type="hidden"
                         name="question_en"
                         id="question_en"
-                        value="{{ entry.question_en or '' }}"
+                        value="{{ entry.question_en if entry else '' }}"
                     >
 
                     <input
@@ -716,7 +705,7 @@
                 <textarea
                     class="form-control {% if correction_map.get('question_ml') %}border border-warning border-3{% endif %}"
                     name="question_ml"
-                    rows="4">{{ entry.question_ml or "" }}</textarea>
+                    rows="4">{{ entry.question_ml if entry else '' }}</textarea>
             </div>
 
         </div>
@@ -751,13 +740,13 @@
                         class="form-control rich-editor {% if correction_map.get('option_a_en') %}border border-warning border-3{% endif %}"
                         contenteditable="{{ 'false' if team_editing_locked else 'true' }}"
                         data-field="option_a_en"
-                    >{{ entry.get_rich("option_a_en") | safe }}</div>
+                    >{% if entry %}{{ entry.get_rich("option_a_en") | safe }}{% endif %}</div>
 
                     <input
                         type="hidden"
                         name="option_a_en"
                         id="option_a_en"
-                        value="{{ entry.option_a_en or '' }}"
+                        value="{{ entry.option_a_en if entry else '' }}"
                     >
 
                     <input
@@ -784,7 +773,7 @@
                     type="text"
                     class="form-control {% if correction_map.get('option_a_ml') %}border border-warning border-3{% endif %}"
                     name="option_a_ml"
-                    value="{{ entry.option_a_ml or '' }}">
+                    value="{{ entry.option_a_ml if entry else '' }}">
 
             </div>
 
@@ -821,7 +810,7 @@
                     type="text"
                     class="form-control {% if correction_map.get('option_b_en') %}border border-warning border-3{% endif %}"
                     name="option_b_en"
-                    value="{{ entry.option_b_en or "" }}">
+                    value="{{ entry.option_b_en if entry else '' }}">
 
             </div>
 
@@ -840,7 +829,7 @@
                     type="text"
                     class="form-control {% if correction_map.get('option_b_ml') %}border border-warning border-3{% endif %}"
                     name="option_b_ml"
-                    value="{{ entry.option_b_ml or '' }}">
+                    value="{{ entry.option_b_ml if entry else '' }}">
 
             </div>
 
@@ -877,7 +866,7 @@
                     type="text"
                     class="form-control {% if correction_map.get('option_c_en') %}border border-warning border-3{% endif %}"
                     name="option_c_en"
-                    value="{{ entry.option_c_en or ""  }}">
+                    value="{{ entry.option_c_en if entry else ''  }}">
 
             </div>
 
@@ -895,7 +884,7 @@
                     type="text"
                     class="form-control {% if correction_map.get('option_c_ml') %}border border-warning border-3{% endif %}"
                     name="option_c_ml"
-                    value="{{ entry.option_c_ml or '' }}">
+                    value="{{ entry.option_c_ml if entry else '' }}">
 
             </div>
 
@@ -931,7 +920,7 @@
                 <textarea
                     class="form-control {% if correction_map.get('correct_answer_en') %}border border-warning border-3{% endif %}"
                     rows="3"
-                    name="correct_answer_en">{{ entry.correct_answer_en or "" }}</textarea>
+                    name="correct_answer_en">{{ entry.correct_answer_en if entry else '' }}</textarea>
 
             </div>
 
@@ -949,7 +938,7 @@
                 <textarea
                     class="form-control {% if correction_map.get('correct_answer_ml') %}border border-warning border-3{% endif %}"
                     rows="3"
-                    name="correct_answer_ml">{{ entry.correct_answer_ml or "" }}</textarea>
+                    name="correct_answer_ml">{{ entry.correct_answer_ml if entry else '' }}</textarea>
 
             </div>
 
@@ -1022,7 +1011,7 @@
                 <textarea
                     class="form-control {% if correction_map.get('explanation_en') %}border border-warning border-3{% endif %}"
                     rows="5"
-                    name="explanation_en">{{ entry.explanation_en or ""  }}</textarea>
+                    name="explanation_en">{{ entry.explanation_en if entry else ''  }}</textarea>
 
             </div>
 
@@ -1042,7 +1031,7 @@
                 <textarea
                     class="form-control {% if correction_map.get('explanation_ml') %}border border-warning border-3{% endif %}"
                     rows="5"
-                    name="explanation_ml">{{ entry.explanation_ml or "" }}</textarea>
+                    name="explanation_ml">{{ entry.explanation_ml if entry else '' }}</textarea>
 
             </div>
 
@@ -1080,7 +1069,7 @@
                 <textarea
                     class="form-control {% if correction_map.get('wrong_answer_tip_en') %}border border-warning border-3{% endif %}"
                     rows="4"
-                    name="wrong_answer_tip_en">{{ entry.wrong_answer_tip_en or ""  }}</textarea>
+                    name="wrong_answer_tip_en">{{ entry.wrong_answer_tip_en if entry else ''  }}</textarea>
 
             </div>
 
@@ -1100,7 +1089,7 @@
                 <textarea
                     class="form-control {% if correction_map.get('wrong_answer_tip_ml') %}border border-warning border-3{% endif %}"
                     rows="4"
-                    name="wrong_answer_tip_ml">{{ entry.wrong_answer_tip_ml or "" }}</textarea>
+                    name="wrong_answer_tip_ml">{{ entry.wrong_answer_tip_ml if entry else '' }}</textarea>
 
             </div>
 
@@ -1131,7 +1120,7 @@
             type="text"
             class="form-control"
             name="question_image_ref"
-            value="{{ entry.question_image_ref or '' }}">
+            value="{{ entry.question_image_ref if entry else '' }}">
 
     </div>
 
@@ -1143,8 +1132,12 @@
 
     {% if entry and previous_entry %}
     <a id="prevBtn"
-   href="{{ url_for('project.edit_question', entry_id=previous_entry.id) }}"
-   class="btn btn-secondary">
+    href="{{ url_for(
+        'project.edit_question',
+        entry_id=previous_entry.id,
+        from_status=request.args.get('from_status')
+    ) }}"
+    class="btn btn-secondary">
         ← Previous
     </a>
     {% else %}
@@ -1152,7 +1145,7 @@
     {% endif %}
 
 
-{% if role == "TEAM_MEMBER" %}
+{% if role in ["TEAM", "TEAM_MEMBER"] %}
 
     {% if not entry %}
 
@@ -1225,8 +1218,12 @@
 
     {% if entry and next_entry %}
     <a id="nextBtn"
-   href="{{ url_for('project.edit_question', entry_id=next_entry.id) }}"
-   class="btn btn-primary">
+    href="{{ url_for(
+        'project.edit_question',
+        entry_id=next_entry.id,
+        from_status=request.args.get('from_status')
+    ) }}"
+    class="btn btn-primary">
         Next →
     </a>
     {% else %}
@@ -1447,7 +1444,7 @@ subTopicSelect.addEventListener("change", function () {
 
 <script>
 
-{% if editing_locked %}
+{% if team_editing_locked %}
 
 document.addEventListener("DOMContentLoaded", function(){
 
@@ -1553,7 +1550,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <script>
-    window.savedRichContent = {{ (entry.rich_content or {}) | tojson }};
+    window.savedRichContent = {{ (entry.rich_content if entry else {}) | tojson }};
 </script>
 
 <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
