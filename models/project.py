@@ -26,6 +26,7 @@ class Project(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     
+    
 
     def __repr__(self):
         return f"<Project {self.project_name}>"

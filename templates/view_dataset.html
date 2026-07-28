@@ -204,9 +204,24 @@
 
 <div class="card shadow-sm border-0 rounded-4">
 
-<div class="card-header bg-dark text-white">
+<div class="card-header bg-dark text-white dataset-records-header">
 
-<strong>📋 Dataset Records</strong>
+    <strong>📋 Dataset Records</strong>
+
+    {% if topic or topic_name or sub_topic or status %}
+
+        <a href="{{ url_for(
+            'project.view_dataset',
+            project_id=project.id,
+            search=search
+        ) }}"
+           class="clear-filter-btn">
+
+            ✕ Clear Filters
+
+        </a>
+
+    {% endif %}
 
 </div>
 
@@ -218,19 +233,276 @@
 
 <tr>
 
-<th>Topic</th>
+    <!-- ================= TOPIC FILTER ================= -->
+    <th>
+        <div class="column-filter">
 
-<th>Question ID</th>
+            <span>Topic</span>
 
-<th>Topic Name</th>
+            <button type="button"
+                    class="column-filter-btn"
+                    onclick="toggleColumnFilter('topicFilter', event)">
+                ▼
+            </button>
 
-<th>Sub Topic</th>
+            <div class="column-filter-menu" id="topicFilter">
 
-<th>Status</th>
+                <div class="column-filter-title">
+                    Filter by Topic
+                </div>
 
-<th>Correction</th>
+                <a href="{{ url_for(
+                    'project.view_dataset',
+                    project_id=project.id,
+                    search=search,
+                    sub_topic=sub_topic,
+                    status=status
+                ) }}"
+                   class="column-filter-option {% if not topic %}active{% endif %}">
+                    All Topics
+                </a>
 
-<th class="text-center">Actions</th>
+                {% for t in topics %}
+
+                    <a href="{{ url_for(
+                        'project.view_dataset',
+                        project_id=project.id,
+                        search=search,
+                        topic=t.topic_id,
+                        sub_topic=sub_topic,
+                        status=status
+                    ) }}"
+                       class="column-filter-option {% if topic == t.topic_id %}active{% endif %}">
+
+                        {{ t.topic_id }}
+
+                    </a>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+    </th>
+
+
+    <!-- ================= QUESTION ID ================= -->
+    <th>
+        Question ID
+    </th>
+
+
+    <!-- ================= TOPIC NAME ================= -->
+    <!-- ================= TOPIC NAME FILTER ================= -->
+    <th>
+
+        <div class="column-filter">
+
+            <span>Topic Name</span>
+
+            <button type="button"
+                    class="column-filter-btn"
+                    onclick="toggleColumnFilter('topicNameFilter', event)">
+                ▼
+            </button>
+
+            <div class="column-filter-menu" id="topicNameFilter">
+
+                <div class="column-filter-title">
+                    Filter by Topic Name
+                </div>
+
+                <!-- ALL TOPIC NAMES -->
+                <a href="{{ url_for(
+                    'project.view_dataset',
+                    project_id=project.id,
+                    search=search,
+                    topic=topic,
+                    sub_topic=sub_topic,
+                    status=status
+                ) }}"
+                class="column-filter-option {% if not topic_name %}active{% endif %}">
+                    All Topic Names
+                </a>
+
+                <!-- TOPIC NAME OPTIONS -->
+                {% for t in topic_names %}
+
+                    <a href="{{ url_for(
+                        'project.view_dataset',
+                        project_id=project.id,
+                        search=search,
+                        topic=topic,
+                        topic_name=t.topic_en,
+                        sub_topic=sub_topic,
+                        status=status
+                    ) }}"
+                    class="column-filter-option {% if topic_name == t.topic_en %}active{% endif %}">
+
+                        {{ t.topic_en }}
+
+                    </a>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </th>
+
+
+    <!-- ================= SUB TOPIC FILTER ================= -->
+    <th>
+
+        <div class="column-filter">
+
+            <span>Sub Topic</span>
+
+            <button type="button"
+                    class="column-filter-btn"
+                    onclick="toggleColumnFilter('subTopicFilter', event)">
+                ▼
+            </button>
+
+            <div class="column-filter-menu" id="subTopicFilter">
+
+                <div class="column-filter-title">
+                    Filter by Sub Topic
+                </div>
+
+                <a href="{{ url_for(
+                    'project.view_dataset',
+                    project_id=project.id,
+                    search=search,
+                    topic=topic,
+                    status=status
+                ) }}"
+                   class="column-filter-option {% if not sub_topic %}active{% endif %}">
+                    All Sub Topics
+                </a>
+
+                {% for s in sub_topics %}
+
+                    <a href="{{ url_for(
+                        'project.view_dataset',
+                        project_id=project.id,
+                        search=search,
+                        topic=topic,
+                        sub_topic=s.sub_topic_en,
+                        status=status
+                    ) }}"
+                       class="column-filter-option {% if sub_topic == s.sub_topic_en %}active{% endif %}">
+
+                        {{ s.sub_topic_en }}
+
+                    </a>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </th>
+
+
+    <!-- ================= STATUS FILTER ================= -->
+    <th>
+
+        <div class="column-filter">
+
+            <span>Status</span>
+
+            <button type="button"
+                    class="column-filter-btn"
+                    onclick="toggleColumnFilter('statusFilter', event)">
+                ▼
+            </button>
+
+            <div class="column-filter-menu" id="statusFilter">
+
+                <div class="column-filter-title">
+                    Filter by Status
+                </div>
+
+                <a href="{{ url_for(
+                    'project.view_dataset',
+                    project_id=project.id,
+                    search=search,
+                    topic=topic,
+                    sub_topic=sub_topic
+                ) }}"
+                   class="column-filter-option {% if not status %}active{% endif %}">
+                    All Statuses
+                </a>
+
+
+                <a href="{{ url_for(
+                    'project.view_dataset',
+                    project_id=project.id,
+                    search=search,
+                    topic=topic,
+                    sub_topic=sub_topic,
+                    status='Draft'
+                ) }}"
+                   class="column-filter-option {% if status == 'Draft' %}active{% endif %}">
+                    Draft
+                </a>
+
+
+                <a href="{{ url_for(
+                    'project.view_dataset',
+                    project_id=project.id,
+                    search=search,
+                    topic=topic,
+                    sub_topic=sub_topic,
+                    status='Submitted for Review'
+                ) }}"
+                   class="column-filter-option {% if status == 'Submitted for Review' %}active{% endif %}">
+                    Pending Review
+                </a>
+
+
+                <a href="{{ url_for(
+                    'project.view_dataset',
+                    project_id=project.id,
+                    search=search,
+                    topic=topic,
+                    sub_topic=sub_topic,
+                    status='Corrections Requested'
+                ) }}"
+                   class="column-filter-option {% if status == 'Corrections Requested' %}active{% endif %}">
+                    Corrections Requested
+                </a>
+
+
+                <a href="{{ url_for(
+                    'project.view_dataset',
+                    project_id=project.id,
+                    search=search,
+                    topic=topic,
+                    sub_topic=sub_topic,
+                    status='Approved'
+                ) }}"
+                   class="column-filter-option {% if status == 'Approved' %}active{% endif %}">
+                    Approved
+                </a>
+
+            </div>
+
+        </div>
+
+    </th>
+
+
+    <th>
+        Correction
+    </th>
+
+    <th class="text-center">
+        Actions
+    </th>
 
 </tr>
 
@@ -238,153 +510,195 @@
 
 <tbody>
 
-
+{% if dataset.items %}
 
     {% for row in dataset.items %}
 
-<tr>
+    <tr>
 
-    <td>
+        <td>
+            <span class="fw-bold text-primary">
+                {{ row.topic_id }}
+            </span>
+        </td>
 
-        <span class="fw-bold text-primary">
 
-            {{ row.topic_id }}
+        <td>
 
-        </span>
-
-    </td>
-
-    <td>
-        <span class="fw-semibold">
-            {{ row.practice_question_id }}
-        </span>
-
-        {% if row.is_new %}
-            <span class="new-entry-badge">NEW</span>
-        {% endif %}
-    </td>
-
-    <td>
-
-        {{ row.topic_en }}
-
-    </td>
-
-    <td>
-
-        {{ row.sub_topic_en }}
-
-    </td>
-
-    <td>
-
-        {% if row.status == row.STATUS_DRAFT %}
-
-            <span class="workflow-badge status-draft">
-                <span class="status-dot"></span>
-                Draft
+            <span class="fw-semibold">
+                {{ row.practice_question_id }}
             </span>
 
-        {% elif row.status == row.STATUS_SUBMITTED %}
+            {% if row.is_new %}
+                <span class="new-entry-badge">
+                    NEW
+                </span>
+            {% endif %}
 
-            <span class="workflow-badge status-pending">
-                <span class="status-dot"></span>
-                Pending Review
-            </span>
+        </td>
 
-        {% elif row.status == row.STATUS_CORRECTIONS %}
 
-            <span class="workflow-badge status-corrections">
-                <span class="status-dot"></span>
-                Corrections Requested
-            </span>
+        <td>
+            {{ row.topic_en }}
+        </td>
 
-        {% elif row.status == row.STATUS_APPROVED %}
 
-            <span class="workflow-badge status-approved">
-                <span class="status-dot"></span>
-                Approved
-            </span>
+        <td>
+            {{ row.sub_topic_en }}
+        </td>
 
-        {% else %}
 
-            <span class="workflow-badge status-unknown">
-                <span class="status-dot"></span>
-                {{ row.status }}
-            </span>
+        <td>
 
-        {% endif %}
+            {% if row.status == row.STATUS_DRAFT %}
 
-    </td>
+                <span class="workflow-badge status-draft">
+                    <span class="status-dot"></span>
+                    Draft
+                </span>
 
-    <td>
+            {% elif row.status == row.STATUS_SUBMITTED %}
 
-        {% if row.correction_note %}
+                <span class="workflow-badge status-pending">
+                    <span class="status-dot"></span>
+                    Pending Review
+                </span>
 
-            <span class="badge bg-danger">
+            {% elif row.status == row.STATUS_CORRECTIONS %}
 
-                Needs Review
+                <span class="workflow-badge status-corrections">
+                    <span class="status-dot"></span>
+                    Corrections Requested
+                </span>
 
-            </span>
+            {% elif row.status == row.STATUS_APPROVED %}
 
-        {% else %}
+                <span class="workflow-badge status-approved">
+                    <span class="status-dot"></span>
+                    Approved
+                </span>
 
-            <span class="text-muted">
+            {% else %}
 
-                —
-
-            </span>
-
-        {% endif %}
-
-    </td>
-
-        <td class="text-center">
-
-        <div class="dataset-actions">
-
-            <a href="{{ url_for('project.view_question', entry_id=row.id) }}"
-            class="dataset-action action-view">
-                View
-            </a>
-
-            {% if role == "TEAM_MEMBER" %}
-
-                {% if row.status == row.STATUS_DRAFT
-                    or row.status == row.STATUS_CORRECTIONS %}
-
-                    <a href="{{ url_for('project.edit_question', entry_id=row.id) }}"
-                    class="dataset-action action-edit">
-                        Edit
-                    </a>
-
-                {% endif %}
-
-                {% if row.status == row.STATUS_DRAFT %}
-
-                    <form action="{{ url_for('project.delete_question', entry_id=row.id) }}"
-                        method="POST"
-                        class="d-inline">
-
-                        <button
-                            type="submit"
-                            class="dataset-action action-delete"
-                            onclick="return confirm('Delete this question?')">
-                            Delete
-                        </button>
-
-                    </form>
-
-                {% endif %}
+                <span class="workflow-badge status-unknown">
+                    <span class="status-dot"></span>
+                    {{ row.status }}
+                </span>
 
             {% endif %}
 
-        </div>
+        </td>
 
-    </td>
-</tr>
 
-{% endfor %}
+        <td>
+
+            {% if row.correction_note %}
+
+                <span class="badge bg-danger">
+                    Needs Review
+                </span>
+
+            {% else %}
+
+                <span class="text-muted">
+                    —
+                </span>
+
+            {% endif %}
+
+        </td>
+
+
+        <td class="text-center">
+
+            <div class="dataset-actions">
+
+                <a href="{{ url_for('project.view_question', entry_id=row.id) }}"
+                   class="dataset-action action-view">
+                    View
+                </a>
+
+
+                {% if role == "TEAM_MEMBER" %}
+
+                    {% if row.status == row.STATUS_DRAFT
+                        or row.status == row.STATUS_CORRECTIONS %}
+
+                        <a href="{{ url_for('project.edit_question', entry_id=row.id) }}"
+                           class="dataset-action action-edit">
+                            Edit
+                        </a>
+
+                    {% endif %}
+
+
+                    {% if row.status == row.STATUS_DRAFT %}
+
+                        <form action="{{ url_for('project.delete_question', entry_id=row.id) }}"
+                              method="POST"
+                              class="d-inline">
+
+                            <button
+                                type="submit"
+                                class="dataset-action action-delete"
+                                onclick="return confirm('Delete this question?')">
+
+                                Delete
+
+                            </button>
+
+                        </form>
+
+                    {% endif %}
+
+                {% endif %}
+
+            </div>
+
+        </td>
+
+    </tr>
+
+    {% endfor %}
+
+
+{% else %}
+
+    <tr class="empty-dataset-row">
+
+        <td colspan="7">
+
+            <div class="dataset-empty-state">
+
+                <div class="empty-icon">
+                    🔎
+                </div>
+
+                <strong>
+                    No records found
+                </strong>
+
+                <span>
+                    No dataset entries match the selected filters.
+                </span>
+
+                <a href="{{ url_for(
+                        'project.view_dataset',
+                        project_id=project.id
+                    ) }}"
+                   class="btn btn-sm btn-outline-primary mt-2">
+
+                    Clear Filters
+
+                </a>
+
+            </div>
+
+        </td>
+
+    </tr>
+
+{% endif %}
 
 </tbody>
 
@@ -404,16 +718,17 @@
 <li class="page-item">
 
 <a class="page-link"
-
-href="{{ url_for(
-'project.view_dataset',
-project_id=project.id,
-page=dataset.prev_num,
-search=search,
-topic=topic) }}">
-
-Previous
-
+   href="{{ url_for(
+       'project.view_dataset',
+       project_id=project.id,
+       page=dataset.prev_num,
+       search=search,
+       topic=topic,
+       topic_name=topic_name,
+       sub_topic=sub_topic,
+       status=status
+   ) }}">
+    Previous
 </a>
 
 </li>
@@ -427,16 +742,17 @@ Previous
 <li class="page-item {% if page_num==dataset.page %}active{% endif %}">
 
 <a class="page-link"
-
-href="{{ url_for(
-'project.view_dataset',
-project_id=project.id,
-page=page_num,
-search=search,
-topic=topic) }}">
-
-{{ page_num }}
-
+   href="{{ url_for(
+       'project.view_dataset',
+       project_id=project.id,
+       page=page_num,
+       search=search,
+       topic=topic,
+       topic_name=topic_name,
+       sub_topic=sub_topic,
+       status=status
+   ) }}">
+    {{ page_num }}
 </a>
 
 </li>
@@ -450,16 +766,17 @@ topic=topic) }}">
 <li class="page-item">
 
 <a class="page-link"
-
-href="{{ url_for(
-'project.view_dataset',
-project_id=project.id,
-page=dataset.next_num,
-search=search,
-topic=topic) }}">
-
-Next
-
+   href="{{ url_for(
+       'project.view_dataset',
+       project_id=project.id,
+       page=dataset.next_num,
+       search=search,
+       topic=topic,
+       topic_name=topic_name,
+       sub_topic=sub_topic,
+       status=status
+   ) }}">
+    Next
 </a>
 
 </li>
@@ -474,5 +791,56 @@ Next
 
 </div>
 
+<script>
 
+function toggleColumnFilter(id, event) {
+
+    event.stopPropagation();
+
+    const selectedMenu =
+        document.getElementById(id);
+
+    const menus =
+        document.querySelectorAll(".column-filter-menu");
+
+    menus.forEach(function(menu) {
+
+        if (menu !== selectedMenu) {
+            menu.classList.remove("show");
+        }
+
+    });
+
+    selectedMenu.classList.toggle("show");
+}
+
+
+/* Close dropdown when clicking outside */
+
+document.addEventListener("click", function() {
+
+    document
+        .querySelectorAll(".column-filter-menu")
+        .forEach(function(menu) {
+
+            menu.classList.remove("show");
+
+        });
+
+});
+
+
+/* Prevent dropdown itself from closing */
+
+document
+    .querySelectorAll(".column-filter-menu")
+    .forEach(function(menu) {
+
+        menu.addEventListener("click", function(event) {
+            event.stopPropagation();
+        });
+
+    });
+
+</script>
 {% endblock %}

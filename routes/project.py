@@ -116,34 +116,63 @@ def project_dashboard(project_id):
 
         role=role
     )
-    
+
+
 @project.route("/project/<int:project_id>/dataset")
 def view_dataset(project_id):
 
     project = Project.query.get_or_404(project_id)
 
-    search = request.args.get("search", "").strip()
-    
-    topic = request.args.get("topic", "")
+    # -------------------------------------------------
+    # GET SEARCH + FILTER VALUES
+    # -------------------------------------------------
 
-    query = DatasetEntry.query.filter_by(project_id=project.id)
-    
-    query = query.order_by(
-        DatasetEntry.topic_id.asc(),
-        DatasetEntry.practice_question_id.asc()
+    search = request.args.get("search", "").strip()
+    topic = request.args.get("topic", "").strip()
+    sub_topic = request.args.get("sub_topic", "").strip()
+    status = request.args.get("status", "").strip()
+    topic_name = request.args.get("topic_name", "").strip()
+
+    # -------------------------------------------------
+    # BASE QUERY
+    # -------------------------------------------------
+
+    query = DatasetEntry.query.filter_by(
+        project_id=project.id
     )
-    
+
+    # -------------------------------------------------
+    # FILTERS
+    # -------------------------------------------------
+
     if topic:
         query = query.filter(
             DatasetEntry.topic_id == topic
         )
 
+    if sub_topic:
+        query = query.filter(
+            DatasetEntry.sub_topic_en == sub_topic
+        )
+
+    if status:
+        query = query.filter(
+            DatasetEntry.status == status
+        )
+        
+    if topic_name:
+        query = query.filter(
+            DatasetEntry.topic_en == topic_name
+        )
+
+    # -------------------------------------------------
+    # SEARCH
+    # -------------------------------------------------
+
     if search:
 
         query = query.filter(
-
             or_(
-
                 DatasetEntry.topic_en.ilike(f"%{search}%"),
                 DatasetEntry.topic_ml.ilike(f"%{search}%"),
 
@@ -153,11 +182,23 @@ def view_dataset(project_id):
                 DatasetEntry.practice_question_id.ilike(f"%{search}%"),
 
                 DatasetEntry.question_en.ilike(f"%{search}%")
-
             )
-
         )
-        
+
+    # -------------------------------------------------
+    # SORTING
+    # -------------------------------------------------
+
+    query = query.order_by(
+        DatasetEntry.topic_id.asc(),
+        DatasetEntry.row_number.asc(),
+        DatasetEntry.practice_question_id.asc()
+    )
+
+    # -------------------------------------------------
+    # AVAILABLE TOPICS
+    # -------------------------------------------------
+
     topics = (
         db.session.query(DatasetEntry.topic_id)
         .filter_by(project_id=project.id)
@@ -165,7 +206,36 @@ def view_dataset(project_id):
         .order_by(DatasetEntry.topic_id)
         .all()
     )
-        
+
+    # -------------------------------------------------
+    # AVAILABLE SUB TOPICS
+    # -------------------------------------------------
+
+    sub_topics = (
+        db.session.query(DatasetEntry.sub_topic_en)
+        .filter(
+            DatasetEntry.project_id == project.id,
+            DatasetEntry.sub_topic_en.isnot(None)
+        )
+        .distinct()
+        .order_by(DatasetEntry.sub_topic_en)
+        .all()
+    )
+    
+    topic_names = (
+    db.session.query(DatasetEntry.topic_en)
+        .filter(
+            DatasetEntry.project_id == project.id,
+            DatasetEntry.topic_en.isnot(None)
+        )
+        .distinct()
+        .order_by(DatasetEntry.topic_en)
+        .all()
+    )
+
+    # -------------------------------------------------
+    # PAGINATION
+    # -------------------------------------------------
 
     page = request.args.get("page", 1, type=int)
 
@@ -174,36 +244,54 @@ def view_dataset(project_id):
         per_page=20,
         error_out=False
     )
-    
+
+    # -------------------------------------------------
+    # TOTAL PROJECT RECORDS
+    # -------------------------------------------------
+
     total_records = DatasetEntry.query.filter_by(
         project_id=project.id
     ).count()
-    
+
     role = session.get("role")
-    print("CURRENT ROLE =", repr(role))
 
     return render_template(
         "view_dataset.html",
+
         project=project,
         dataset=dataset,
+
         search=search,
+
         topic=topic,
         topics=topics,
+
+        sub_topic=sub_topic,
+        sub_topics=sub_topics,
+
+        status=status,
+
         total_records=total_records,
         role=role,
+        topic_name=topic_name,
+        topic_names=topic_names,
     )
     
     
 @project.route("/question/<int:entry_id>")
+@login_required
 def view_question(entry_id):
 
     entry = DatasetEntry.query.get_or_404(entry_id)
 
+    role = session.get("role")
+
     return render_template(
         "view_question.html",
-        entry=entry
+        entry=entry,
+        role=role
     )
-
+    
 
 @project.route("/question/<int:entry_id>/edit", methods=["GET", "POST"])
 def edit_question(entry_id):
@@ -343,6 +431,8 @@ def edit_question(entry_id):
         if action == "submit_review":
             entry.status = DatasetEntry.STATUS_SUBMITTED
             entry.submitted_at = datetime.utcnow()
+                # Once submitted for review, it is no longer a NEW entry
+            entry.is_new = False
             
         elif action == "approve":
             entry.status = DatasetEntry.STATUS_APPROVED

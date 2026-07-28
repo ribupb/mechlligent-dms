@@ -352,8 +352,12 @@
 
         <div class="action-grid">
 
-            <a href="#"
-               class="primary-action">
+            <a href="{{ url_for(
+                'project.review_queue',
+                project_id=project.id,
+                status='submitted'
+                ) }}"
+            class="primary-action">
 
                 <span class="action-icon">
 
