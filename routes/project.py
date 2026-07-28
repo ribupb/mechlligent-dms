@@ -662,10 +662,12 @@ def import_dataset(project_id):
         english_file = request.files.get(
             "english_dataset"
         )
+        
 
         malayalam_file = request.files.get(
             "malayalam_dataset"
         )
+
 
 
         # ==========================================
@@ -861,6 +863,17 @@ def import_dataset(project_id):
             matched_count = 0
             unmatched_count = 0
 
+            # Load all existing project entries once
+            project_entries = DatasetEntry.query.filter_by(
+                project_id=project.id
+            ).all()
+
+            ml_existing_entries = {
+                str(item.practice_question_id).strip(): item
+                for item in project_entries
+                if item.practice_question_id
+            }
+            
 
             for ml_row in ml_sheet.iter_rows(
                 min_row=2,
@@ -918,10 +931,7 @@ def import_dataset(project_id):
 
 
                 # Find corresponding existing English entry
-                existing_entry = DatasetEntry.query.filter_by(
-                    project_id=project.id,
-                    practice_question_id=practice_id
-                ).first()
+                existing_entry = ml_existing_entries.get(practice_id)
 
 
                 if not existing_entry:
@@ -987,10 +997,6 @@ def import_dataset(project_id):
 
                 matched_count += 1
 
-                print(
-                    "Malayalam matched:",
-                    practice_id
-                )
 
 
             try:
@@ -1342,8 +1348,29 @@ def import_dataset(project_id):
                 "Existing entries and corrections marked for replacement."
             )
 
-        print("\nHEADERS")
-        print(headers)
+        # ==========================================
+        # PRELOAD EXISTING ENTRIES
+        # Avoid one database query per Excel row
+        # ==========================================
+
+        existing_entries = {}
+
+        if existing_action == "merge":
+
+            project_entries = DatasetEntry.query.filter_by(
+                project_id=project.id
+            ).all()
+
+            existing_entries = {
+                str(item.practice_question_id).strip(): item
+                for item in project_entries
+                if item.practice_question_id
+            }
+
+            print(
+                "Existing entries loaded for merge:",
+                len(existing_entries)
+            )
         
         
         
@@ -1374,8 +1401,7 @@ def import_dataset(project_id):
                 if header is not None
             }
 
-            print(f"\nEXCEL ROW: {excel_row_number}")
-            print(row_data)
+
             
             # Skip completely empty rows
             if row_data.get("Practice_question_id") is None:
@@ -1421,12 +1447,6 @@ def import_dataset(project_id):
                 current_not_applies_when = row_data["Not_applies_when"]
                 
                 
-            print("\nCURRENT VALUES")
-            print(current_topic_id)
-            print(current_topic)
-            print(current_sub_topic)
-            
-        
         
             entry = DatasetEntry(
                 project_id=project.id,
@@ -1504,16 +1524,8 @@ def import_dataset(project_id):
             # ======================================
 
             if existing_action == "merge":
-
-                existing_entry = DatasetEntry.query.filter_by(
-                    project_id=project.id,
-                    practice_question_id=row_data[
-                        "Practice_question_id"
-                    ]
-                ).first()
-
+                existing_entry = existing_entries.get(practice_id)
             else:
-
                 existing_entry = None
 
 
@@ -1528,18 +1540,6 @@ def import_dataset(project_id):
         # Only fill fields that are currently empty.
         # ======================================
         
-                print("\n========== MERGE DEBUG ==========")
-                print("ID:", existing_entry.practice_question_id)
-
-                print("DATABASE:")
-                print("Option B:", repr(existing_entry.option_b_en))
-                print("Option C:", repr(existing_entry.option_c_en))
-
-                print("EXCEL:")
-                print("Option B:", repr(row_data.get("Option_B")))
-                print("Option C:", repr(row_data.get("Option_C")))
-
-                print("=================================\n")
 
 
                 # ======================================
@@ -1785,15 +1785,9 @@ def import_dataset(project_id):
                 if data_added:
                     existing_entry.is_new = True
                     
-                print("\nAFTER SAFE MERGE:")
-                print("ID:", existing_entry.practice_question_id)
-                print("Option B:", repr(existing_entry.option_b_en))
-                print("Option C:", repr(existing_entry.option_c_en))
 
-                print(
-                    "Merged:",
-                    existing_entry.practice_question_id
-                )
+
+
 
             else:
 
@@ -1805,18 +1799,6 @@ def import_dataset(project_id):
                     entry.is_new = False
 
                 db.session.add(entry)
-
-                print(
-                    "Added:",
-                    entry.practice_question_id,
-                    "| NEW:",
-                    entry.is_new
-                )
-
-                print(
-                    "Added:",
-                    entry.practice_question_id
-                )
 
 
         print("All rows imported successfully!")
