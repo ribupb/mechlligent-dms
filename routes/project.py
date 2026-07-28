@@ -1389,7 +1389,7 @@ def import_dataset(project_id):
         
         # Flush large imports in smaller batches.
         # This does NOT commit; the whole import remains one transaction.
-        batch_size = 50
+        batch_size = 1
         pending_new_entries = 0
                 
         
