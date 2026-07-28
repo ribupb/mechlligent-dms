@@ -1387,7 +1387,11 @@ def import_dataset(project_id):
         current_not_applies_when = None
         
         
-        
+        # Flush large imports in smaller batches.
+        # This does NOT commit; the whole import remains one transaction.
+        batch_size = 50
+        pending_new_entries = 0
+                
         
        # Read every data row
         for excel_row_number, row in enumerate(
@@ -1799,6 +1803,33 @@ def import_dataset(project_id):
                     entry.is_new = False
 
                 db.session.add(entry)
+
+                pending_new_entries += 1
+
+                if pending_new_entries >= batch_size:
+                    try:
+                        db.session.flush()
+                        print(
+                            f"Batch flushed successfully "
+                            f"through Excel row {excel_row_number}"
+                        )
+                        pending_new_entries = 0
+
+                    except Exception as e:
+                        db.session.rollback()
+
+                        print(
+                            f"IMPORT FAILED while flushing "
+                            f"Excel row {excel_row_number}:",
+                            e
+                        )
+
+                        flash(
+                            "Import failed. No database changes were saved.",
+                            "danger"
+                        )
+
+                        return redirect(request.url)
                 
         # TEMP DEBUG: verify integer DB fields before commit
         for obj in db.session.new:
@@ -1828,7 +1859,7 @@ def import_dataset(project_id):
                     )
 
 
-        print("All rows imported successfully!")
+        print("All Excel rows processed successfully!")
 
  
         
