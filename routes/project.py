@@ -1799,6 +1799,33 @@ def import_dataset(project_id):
                     entry.is_new = False
 
                 db.session.add(entry)
+                
+        # TEMP DEBUG: verify integer DB fields before commit
+        for obj in db.session.new:
+            if isinstance(obj, DatasetEntry):
+                print(
+                    "DEBUG ENTRY:",
+                    "id=", obj.id,
+                    "project_id=", repr(obj.project_id),
+                    "row_number=", repr(obj.row_number),
+                    "practice_id=", repr(obj.practice_question_id)
+                )
+
+                if not isinstance(obj.project_id, int):
+                    print(
+                        "!!! BAD PROJECT_ID !!!",
+                        repr(obj.project_id),
+                        "Practice ID:",
+                        repr(obj.practice_question_id)
+                    )
+
+                if not isinstance(obj.row_number, int):
+                    print(
+                        "!!! BAD ROW_NUMBER !!!",
+                        repr(obj.row_number),
+                        "Practice ID:",
+                        repr(obj.practice_question_id)
+                    )
 
 
         print("All rows imported successfully!")
