@@ -1310,8 +1310,6 @@ def import_dataset(project_id):
 
         # Replace is allowed, but deletion happens
         # only AFTER the uploaded file was validated.
-# Replace is allowed, but deletion happens
-# only AFTER the uploaded file was validated.
         if existing_action == "replace":
 
             # Get IDs of existing dataset entries
@@ -1809,10 +1807,6 @@ def import_dataset(project_id):
                 if pending_new_entries >= batch_size:
                     try:
                         db.session.flush()
-                        print(
-                            f"Batch flushed successfully "
-                            f"through Excel row {excel_row_number}"
-                        )
                         pending_new_entries = 0
 
                     except Exception as e:
@@ -1831,33 +1825,6 @@ def import_dataset(project_id):
 
                         return redirect(request.url)
                 
-        # TEMP DEBUG: verify integer DB fields before commit
-        for obj in db.session.new:
-            if isinstance(obj, DatasetEntry):
-                print(
-                    "DEBUG ENTRY:",
-                    "id=", obj.id,
-                    "project_id=", repr(obj.project_id),
-                    "row_number=", repr(obj.row_number),
-                    "practice_id=", repr(obj.practice_question_id)
-                )
-
-                if not isinstance(obj.project_id, int):
-                    print(
-                        "!!! BAD PROJECT_ID !!!",
-                        repr(obj.project_id),
-                        "Practice ID:",
-                        repr(obj.practice_question_id)
-                    )
-
-                if not isinstance(obj.row_number, int):
-                    print(
-                        "!!! BAD ROW_NUMBER !!!",
-                        repr(obj.row_number),
-                        "Practice ID:",
-                        repr(obj.practice_question_id)
-                    )
-
 
         print("All Excel rows processed successfully!")
 
